@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatDate, sortPosts } from "../../utils/posts";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({ params: { tag }, props: { tag, posts } }));
+}
+
+const { tag, posts } = Astro.props;
+const taggedPosts = sortPosts(posts.filter((post) => post.data.tags.includes(tag)));
+---
+
+<BaseLayout title={`#${tag}`}>
+  <section class="page">
+    <h1>#{tag}</h1>
+    <ol class="compact-list">
+      {taggedPosts.map((post) => (
+        <li>
+          <a href={`/posts/${post.id}/`}>{post.data.title}</a>
+          <time datetime={post.data.published.toISOString()}>{formatDate(post.data.published)}</time>
+        </li>
+      ))}
+    </ol>
+    <a class="back-link" href="/tags/">← All tags</a>
+  </section>
+</BaseLayout>

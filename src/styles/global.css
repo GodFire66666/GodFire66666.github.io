@@ -1,0 +1,373 @@
+:root {
+  color-scheme: light;
+  --paper: #fcfcfb;
+  --ink: #263343;
+  --muted: #69717a;
+  --line: #d9dde0;
+  --accent: #ad604d;
+  --accent-dark: #8f4637;
+  --soft: #f2f5f6;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  font-size: 18px;
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: Georgia, "Noto Serif SC", "Songti SC", STSong, serif;
+  line-height: 1.72;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--accent-dark);
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover { color: var(--accent); }
+
+.page-shell {
+  width: min(100% - 3rem, 50rem);
+  margin: 0 auto;
+}
+
+.site-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.35rem 0 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-title {
+  color: var(--ink);
+  font-size: 1.08rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.95rem;
+}
+
+.site-header nav a {
+  color: #515c67;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+main {
+  min-height: 72vh;
+  padding: 3rem 0 4.5rem;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Noto Serif SC", "Songti SC", STSong, serif;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.42rem; }
+h3 { font-size: 1.12rem; }
+
+.intro { margin-bottom: 2rem; }
+
+.intro p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+}
+
+.profile-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 10rem;
+  gap: 3rem;
+  align-items: center;
+  padding: 1rem 0 3.25rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--accent-dark);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.profile-intro h1 {
+  font-size: 3.2rem;
+  line-height: 1.08;
+}
+
+.profile-role {
+  margin: 0.8rem 0 0;
+  color: #4f5c69;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.profile-summary {
+  max-width: 32rem;
+  margin: 1rem 0 0;
+  color: #46525e;
+  font-size: 1.02rem;
+  line-height: 1.62;
+}
+
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.profile-links a {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.profile-links a::after {
+  content: " \2197";
+  font-size: 0.8em;
+}
+
+.profile-links a[href^="/"]::after { content: " \2192"; }
+
+.profile-photo {
+  display: block;
+  width: 10rem;
+  height: 10rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-heading a {
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-decoration: none;
+}
+
+.post-list, .compact-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post-list > li {
+  padding: 0 0 1.75rem;
+}
+
+.post-list > li + li {
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.post-list h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.post-list h2 a:hover { color: var(--accent-dark); }
+
+.summary {
+  margin: 0.35rem 0 0.1rem;
+  line-height: 1.55;
+}
+
+.meta, .post-date, .tag-list {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.55rem;
+}
+
+.meta a, .tag-list a {
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.page, .post { max-width: 40rem; }
+.page > h1, .post-header { margin-bottom: 1.8rem; }
+.post-header h1 { font-size: 1.85rem; }
+.post-date { margin: 0.15rem 0 0; }
+
+.tag-list {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prose > *:first-child { margin-top: 0; }
+
+.prose p, .prose ul, .prose ol, .prose blockquote, .prose pre {
+  margin: 1.15rem 0;
+}
+
+.prose h2 { margin-top: 2.1rem; }
+.prose h3 { margin-top: 1.7rem; }
+
+.prose blockquote {
+  margin-left: 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent);
+  background: var(--soft);
+  color: #3f4b57;
+}
+
+.prose blockquote p { margin: 0; }
+
+.prose code {
+  padding: 0.12rem 0.28rem;
+  border-radius: 3px;
+  background: #efeee9;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.86em;
+}
+
+.prose pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border: 1px solid #e4e3dc;
+  background: #f7f7f3;
+  line-height: 1.55;
+}
+
+.prose pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 2.2rem;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-cloud li {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.tag-cloud span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.compact-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.compact-list time {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.error-code {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 2rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 700px) {
+  .profile-intro {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1.5rem;
+    align-items: flex-start;
+    padding: 0 0 2.5rem;
+  }
+
+  .profile-photo {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+
+  .profile-intro h1 { font-size: 2.55rem; }
+}
+
+@media (max-width: 560px) {
+  html { font-size: 17px; }
+  .page-shell { width: min(100% - 2rem, 50rem); }
+
+  .site-header {
+    display: block;
+    padding-top: 0.9rem;
+  }
+
+  .site-header nav { margin-top: 0.4rem; }
+  main { padding-top: 2rem; }
+
+  .profile-role { font-size: 0.96rem; }
+  .profile-summary { font-size: 1rem; }
+
+  .section-heading { margin-bottom: 1.35rem; }
+  .compact-list li, footer { display: block; }
+
+  .compact-list time, footer span {
+    display: block;
+    margin-top: 0.2rem;
+  }
+}

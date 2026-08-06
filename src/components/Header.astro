@@ -1,0 +1,13 @@
+---
+import { SITE } from "../config";
+---
+
+<header class="site-header">
+  <a class="site-title" href="/">{SITE.author}</a>
+  <nav aria-label="Primary navigation">
+    <a href="/about/">About</a>
+    <a href="/tags/">Tags</a>
+    <a href={SITE.github}>GitHub</a>
+    <a href="/rss.xml">RSS</a>
+  </nav>
+</header>

@@ -1,0 +1,59 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE } from "../config";
+import { formatDate, sortPosts, tagPath } from "../utils/posts";
+
+const posts = sortPosts(
+  (await getCollection("posts")).filter((post) => !post.data.draft),
+);
+---
+
+<BaseLayout>
+  <section class="profile-intro" aria-labelledby="profile-name">
+    <div class="profile-copy">
+      <p class="eyebrow">Research, engineering, and notes in public</p>
+      <h1 id="profile-name">{SITE.author}</h1>
+      <p class="profile-role">Machine learning · Agents · Evaluation</p>
+      <p class="profile-summary">
+        I write about building reliable intelligent systems, the craft behind
+        good technical work, and ideas worth returning to.
+      </p>
+      <nav class="profile-links" aria-label="Profile links">
+        <a href={SITE.github}>GitHub</a>
+        <a href="/about/">About</a>
+        <a href="/rss.xml">RSS</a>
+      </nav>
+    </div>
+    <img
+      class="profile-photo"
+      src="https://github.com/GodFire66666.png?size=320"
+      alt="Yucong Luo"
+      width="160"
+      height="160"
+    />
+  </section>
+
+  <div class="section-heading">
+    <h2>Writing</h2>
+    <a href="/tags/">Browse by topic</a>
+  </div>
+  <ol class="post-list">
+    {posts.map((post) => (
+      <li>
+        <article>
+          <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
+          <p class="summary">{post.data.description}</p>
+          <div class="meta">
+            <time datetime={post.data.published.toISOString()}>
+              {formatDate(post.data.published)}
+            </time>
+            {post.data.tags.map((tag) => (
+              <a href={tagPath(tag)}>#{tag}</a>
+            ))}
+          </div>
+        </article>
+      </li>
+    ))}
+  </ol>
+</BaseLayout>
