@@ -4,4 +4,5 @@ export const SITE = {
   author: "Yucong Luo",
   language: "en",
   github: "https://github.com/GodFire66666",
+  xiaohongshu: "https://xhslink.cn/m/baVEC8LUlv",
 };
