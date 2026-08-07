@@ -1,6 +1,6 @@
 export const SITE = {
   title: "Yucong Luo's blog",
-  description: "Notes on LLMs, agent training, and evaluation.",
+  description: "Notes on LLMs, agent training, and ideas in progress.",
   author: "Yucong Luo",
   language: "en",
   github: "https://github.com/GodFire66666",

@@ -23,7 +23,7 @@ Suppose a metric drops. Saying “the model became worse” is rarely useful bec
 Metric changed
   -> Which examples changed?
   -> Which scenarios contain most of the change?
-  -> Did the input, reasoning, or evaluation rule cause it?
+  -> Did the input, reasoning, or decision rule cause it?
   -> What is the smallest experiment that can verify the cause?
 ```
 
