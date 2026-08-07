@@ -4,5 +4,6 @@ export const SITE = {
   author: "Yucong Luo",
   language: "en",
   github: "https://github.com/GodFire66666",
+  scholar: "https://scholar.google.com/citations?user=O1RFtawAAAAJ&hl=zh-CN",
   xiaohongshu: "https://xhslink.cn/m/baVEC8LUlv",
 };
