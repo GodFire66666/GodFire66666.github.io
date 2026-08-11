@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { SITE } from "../config";
+import { featuredProject } from "../data/projects";
 import { formatDate, sortPosts, tagPath } from "../utils/posts";
 
 const posts = sortPosts(
@@ -36,26 +37,68 @@ const posts = sortPosts(
     />
   </section>
 
-  <div class="section-heading">
-    <h2>Writing</h2>
-    <a href="/tags/">Browse by topic</a>
-  </div>
-  <ol class="post-list">
-    {posts.map((post) => (
-      <li>
-        <article>
-          <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
-          <p class="summary">{post.data.description}</p>
-          <div class="meta">
-            <time datetime={post.data.published.toISOString()}>
-              {formatDate(post.data.published)}
-            </time>
-            {post.data.tags.map((tag) => (
-              <a href={tagPath(tag)}>#{tag}</a>
-            ))}
-          </div>
-        </article>
-      </li>
-    ))}
-  </ol>
+  {featuredProject && (
+    <section class="home-section" aria-labelledby="featured-project-heading">
+      <div class="section-heading">
+        <h2 id="featured-project-heading">Featured Project</h2>
+        <a href="/projects/">All projects</a>
+      </div>
+      <article class="featured-project">
+        <a
+          class="project-image-link"
+          href={featuredProject.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Visit ${featuredProject.title}`}
+        >
+          <img
+            src={featuredProject.image}
+            alt={featuredProject.imageAlt}
+            width="1874"
+            height="1035"
+          />
+        </a>
+        <div class="featured-project-copy">
+          <ul class="project-tags" aria-label="Project categories">
+            {featuredProject.tags.map((tag) => <li>{tag}</li>)}
+          </ul>
+          <h3>{featuredProject.title}</h3>
+          <p>{featuredProject.description}</p>
+          <a
+            class="project-link"
+            href={featuredProject.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Visit website <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </article>
+    </section>
+  )}
+
+  <section class="home-section" aria-labelledby="writing-heading">
+    <div class="section-heading">
+      <h2 id="writing-heading">Writing</h2>
+      <a href="/tags/">Browse by topic</a>
+    </div>
+    <ol class="post-list">
+      {posts.map((post) => (
+        <li>
+          <article>
+            <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
+            <p class="summary">{post.data.description}</p>
+            <div class="meta">
+              <time datetime={post.data.published.toISOString()}>
+                {formatDate(post.data.published)}
+              </time>
+              {post.data.tags.map((tag) => (
+                <a href={tagPath(tag)}>#{tag}</a>
+              ))}
+            </div>
+          </article>
+        </li>
+      ))}
+    </ol>
+  </section>
 </BaseLayout>

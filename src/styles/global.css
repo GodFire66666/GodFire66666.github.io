@@ -174,6 +174,97 @@ h3 { font-size: 1.12rem; }
   text-decoration: none;
 }
 
+.home-section + .home-section { margin-top: 3.5rem; }
+
+.featured-project {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(14rem, 0.85fr);
+  gap: 1.75rem;
+  align-items: center;
+}
+
+.project-image-link {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0f0d1f;
+}
+
+.project-image-link img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1874 / 1035;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.project-image-link:hover img { transform: scale(1.012); }
+
+.featured-project-copy h3,
+.project-entry-copy h2 {
+  margin-top: 0.65rem;
+}
+
+.featured-project-copy > p,
+.project-entry-copy > p {
+  margin: 0.55rem 0 0;
+  color: #46525e;
+  line-height: 1.58;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.72rem;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.project-tags li + li::before {
+  margin-right: 0.75rem;
+  color: var(--line);
+  content: "/";
+}
+
+.project-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.projects-intro { max-width: 36rem; }
+
+.project-list {
+  margin: 2.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-list > li {
+  padding: 2rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.project-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.project-entry-copy .project-description {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .post-list, .compact-list {
   margin: 0;
   padding: 0;
@@ -346,6 +437,14 @@ footer {
   }
 
   .profile-intro h1 { font-size: 2.55rem; }
+
+  .featured-project,
+  .project-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-project { gap: 1.25rem; }
+  .project-entry { gap: 1.4rem; }
 }
 
 @media (max-width: 560px) {

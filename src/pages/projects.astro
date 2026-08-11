@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { projects } from "../data/projects";
+---
+
+<BaseLayout
+  title="Projects"
+  description="Selected projects designed and built by Yucong Luo."
+>
+  <section class="intro projects-intro">
+    <p class="eyebrow">Selected work</p>
+    <h1>Projects</h1>
+    <p>
+      Things I have designed, built, and learned from, across AI research and
+      personal experiments.
+    </p>
+  </section>
+
+  <ol class="project-list">
+    {projects.map((project) => (
+      <li>
+        <article class="project-entry">
+          <a
+            class="project-image-link"
+            href={project.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Visit ${project.title}`}
+          >
+            <img
+              src={project.image}
+              alt={project.imageAlt}
+              width="1874"
+              height="1035"
+            />
+          </a>
+          <div class="project-entry-copy">
+            <ul class="project-tags" aria-label="Project categories">
+              {project.tags.map((tag) => <li>{tag}</li>)}
+            </ul>
+            <h2>{project.title}</h2>
+            <p class="project-description">{project.description}</p>
+            <p>{project.details}</p>
+            <a
+              class="project-link"
+              href={project.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit website <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
+      </li>
+    ))}
+  </ol>
+</BaseLayout>
