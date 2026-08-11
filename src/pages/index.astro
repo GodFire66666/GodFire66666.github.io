@@ -3,28 +3,51 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { SITE } from "../config";
 import { featuredProject } from "../data/projects";
+import { formatDateZh, translateTag } from "../utils/i18n";
 import { formatDate, sortPosts, tagPath } from "../utils/posts";
 
-const posts = sortPosts(
-  (await getCollection("posts")).filter((post) => !post.data.draft),
+const [postEntries, postTranslations] = await Promise.all([
+  getCollection("posts"),
+  getCollection("postsZh"),
+]);
+const posts = sortPosts(postEntries.filter((post) => !post.data.draft));
+const translationsById = new Map(
+  postTranslations.map((translation) => [translation.id, translation]),
 );
 ---
 
 <BaseLayout>
   <section class="profile-intro" aria-labelledby="profile-name">
     <div class="profile-copy">
-      <p class="eyebrow">LLMs, agent training, and notes in public</p>
+      <p class="eyebrow">
+        <span class="en-text">LLMs, agent training, and notes in public</span>
+        <span class="zh-text">大语言模型、智能体训练与公开笔记</span>
+      </p>
       <h1 id="profile-name">{SITE.author}</h1>
-      <p class="profile-role">LLMs · Agent Training</p>
+      <p class="profile-role">
+        <span class="en-text">LLMs · Agent Training</span>
+        <span class="zh-text">大语言模型 · 智能体训练</span>
+      </p>
       <p class="profile-summary">
-        I work on LLMs and agent training, and write about the data,
-        experiments, and lessons behind building better agents.
+        <span class="en-text">
+          I work on LLMs and agent training, and write about the data,
+          experiments, and lessons behind building better agents.
+        </span>
+        <span class="zh-text">
+          我从事大语言模型与智能体训练相关工作，并记录构建更好智能体背后的数据、实验与经验。
+        </span>
       </p>
       <nav class="profile-links" aria-label="Profile links">
         <a href={SITE.github}>GitHub</a>
-        <a href={SITE.scholar}>Google Scholar</a>
-        <a href={SITE.xiaohongshu}>Xiaohongshu</a>
-        <a href="/about/">About</a>
+        <a href={SITE.scholar}>
+          <span class="en-text">Google Scholar</span><span class="zh-text">谷歌学术</span>
+        </a>
+        <a href={SITE.xiaohongshu}>
+          <span class="en-text">Xiaohongshu</span><span class="zh-text">小红书</span>
+        </a>
+        <a href="/about/">
+          <span class="en-text">About</span><span class="zh-text">关于</span>
+        </a>
         <a href="/rss.xml">RSS</a>
       </nav>
     </div>
@@ -40,8 +63,12 @@ const posts = sortPosts(
   {featuredProject && (
     <section class="home-section" aria-labelledby="featured-project-heading">
       <div class="section-heading">
-        <h2 id="featured-project-heading">Featured Project</h2>
-        <a href="/projects/">All projects</a>
+        <h2 id="featured-project-heading">
+          <span class="en-text">Featured Project</span><span class="zh-text">精选项目</span>
+        </h2>
+        <a href="/projects/">
+          <span class="en-text">All projects</span><span class="zh-text">全部项目</span>
+        </a>
       </div>
       <article class="featured-project">
         <a
@@ -59,18 +86,29 @@ const posts = sortPosts(
           />
         </a>
         <div class="featured-project-copy">
-          <ul class="project-tags" aria-label="Project categories">
+          <ul class="project-tags en-text" aria-label="Project categories">
             {featuredProject.tags.map((tag) => <li>{tag}</li>)}
           </ul>
-          <h3>{featuredProject.title}</h3>
-          <p>{featuredProject.description}</p>
+          <ul class="project-tags zh-text" aria-label="项目分类">
+            {featuredProject.tagsZh.map((tag) => <li>{tag}</li>)}
+          </ul>
+          <h3>
+            <span class="en-text">{featuredProject.title}</span>
+            <span class="zh-text">{featuredProject.titleZh}</span>
+          </h3>
+          <p>
+            <span class="en-text">{featuredProject.description}</span>
+            <span class="zh-text">{featuredProject.descriptionZh}</span>
+          </p>
           <a
             class="project-link"
             href={featuredProject.href}
             target="_blank"
             rel="noreferrer"
           >
-            Visit website <span aria-hidden="true">↗</span>
+            <span class="en-text">Visit website</span>
+            <span class="zh-text">访问网站</span>
+            <span aria-hidden="true">↗</span>
           </a>
         </div>
       </article>
@@ -79,26 +117,48 @@ const posts = sortPosts(
 
   <section class="home-section" aria-labelledby="writing-heading">
     <div class="section-heading">
-      <h2 id="writing-heading">Writing</h2>
-      <a href="/tags/">Browse by topic</a>
+      <h2 id="writing-heading">
+        <span class="en-text">Writing</span><span class="zh-text">文章</span>
+      </h2>
+      <a href="/tags/">
+        <span class="en-text">Browse by topic</span><span class="zh-text">按主题浏览</span>
+      </a>
     </div>
     <ol class="post-list">
-      {posts.map((post) => (
-        <li>
-          <article>
-            <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
-            <p class="summary">{post.data.description}</p>
-            <div class="meta">
-              <time datetime={post.data.published.toISOString()}>
-                {formatDate(post.data.published)}
-              </time>
-              {post.data.tags.map((tag) => (
-                <a href={tagPath(tag)}>#{tag}</a>
-              ))}
-            </div>
-          </article>
-        </li>
-      ))}
+      {posts.map((post) => {
+        const translation = translationsById.get(post.id);
+        return (
+          <li>
+            <article>
+              <h2>
+                <a href={`/posts/${post.id}/`}>
+                  <span class="en-text">{post.data.title}</span>
+                  <span class="zh-text">{translation?.data.title ?? post.data.title}</span>
+                </a>
+              </h2>
+              <p class="summary">
+                <span class="en-text">{post.data.description}</span>
+                <span class="zh-text">
+                  {translation?.data.description ?? post.data.description}
+                </span>
+              </p>
+              <div class="meta">
+                <time class="en-text" datetime={post.data.published.toISOString()}>
+                  {formatDate(post.data.published)}
+                </time>
+                <time class="zh-text" datetime={post.data.published.toISOString()}>
+                  {formatDateZh(post.data.published)}
+                </time>
+                {post.data.tags.map((tag) => (
+                  <a href={tagPath(tag)}>
+                    #<span class="en-text">{tag}</span><span class="zh-text">{translateTag(tag)}</span>
+                  </a>
+                ))}
+              </div>
+            </article>
+          </li>
+        );
+      })}
     </ol>
   </section>
 </BaseLayout>

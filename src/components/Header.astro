@@ -5,10 +5,81 @@ import { SITE } from "../config";
 <header class="site-header">
   <a class="site-title" href="/">{SITE.author}</a>
   <nav aria-label="Primary navigation">
-    <a href="/projects/">Projects</a>
-    <a href="/about/">About</a>
-    <a href="/tags/">Tags</a>
+    <a href="/projects/">
+      <span class="en-text">Projects</span><span class="zh-text">项目</span>
+    </a>
+    <a href="/about/">
+      <span class="en-text">About</span><span class="zh-text">关于</span>
+    </a>
+    <a href="/tags/">
+      <span class="en-text">Tags</span><span class="zh-text">标签</span>
+    </a>
     <a href={SITE.github}>GitHub</a>
     <a href="/rss.xml">RSS</a>
+    <button
+      class="language-toggle"
+      type="button"
+      aria-label="Switch to Chinese"
+      data-language-toggle
+    >
+      <span class="language-option" data-language-option="en">A</span>
+      <span class="language-option" data-language-option="zh">文</span>
+    </button>
   </nav>
 </header>
+
+<script>
+  const languageKey = "yucong-site-language";
+  const root = document.documentElement;
+  const toggle = document.querySelector<HTMLButtonElement>(
+    "[data-language-toggle]",
+  );
+
+  function currentLanguage() {
+    return root.classList.contains("lang-zh") ? "zh" : "en";
+  }
+
+  function applyLanguage(language: "en" | "zh") {
+    root.classList.toggle("lang-en", language === "en");
+    root.classList.toggle("lang-zh", language === "zh");
+    root.lang = language === "zh" ? "zh-CN" : "en";
+
+    const title = document.body.dataset[`title${language === "zh" ? "Zh" : "En"}`];
+    const description =
+      document.body.dataset[`description${language === "zh" ? "Zh" : "En"}`];
+    if (title) document.title = title;
+    if (description) {
+      document
+        .querySelector('meta[name="description"]')
+        ?.setAttribute("content", description);
+    }
+
+    toggle?.querySelectorAll<HTMLElement>("[data-language-option]").forEach(
+      (option) => {
+        option.classList.toggle(
+          "active",
+          option.dataset.languageOption === language,
+        );
+      },
+    );
+
+    if (toggle) {
+      toggle.setAttribute(
+        "aria-label",
+        language === "en" ? "Switch to Chinese" : "切换到英文",
+      );
+    }
+  }
+
+  applyLanguage(currentLanguage());
+
+  toggle?.addEventListener("click", () => {
+    const nextLanguage = currentLanguage() === "en" ? "zh" : "en";
+    applyLanguage(nextLanguage);
+    try {
+      localStorage.setItem(languageKey, nextLanguage);
+    } catch {
+      // The language still switches when storage is unavailable.
+    }
+  });
+</script>

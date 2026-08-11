@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatDateZh, translateTag } from "../../utils/i18n";
 import { formatDate, sortPosts } from "../../utils/posts";
 
 export async function getStaticPaths() {
@@ -11,19 +12,38 @@ export async function getStaticPaths() {
 
 const { tag, posts } = Astro.props;
 const taggedPosts = sortPosts(posts.filter((post) => post.data.tags.includes(tag)));
+const translations = await getCollection("postsZh");
+const translationsById = new Map(
+  translations.map((translation) => [translation.id, translation]),
+);
 ---
 
-<BaseLayout title={`#${tag}`}>
+<BaseLayout title={`#${tag}`} titleZh={`#${translateTag(tag)}`}>
   <section class="page">
-    <h1>#{tag}</h1>
+    <h1>
+      #<span class="en-text">{tag}</span><span class="zh-text">{translateTag(tag)}</span>
+    </h1>
     <ol class="compact-list">
-      {taggedPosts.map((post) => (
-        <li>
-          <a href={`/posts/${post.id}/`}>{post.data.title}</a>
-          <time datetime={post.data.published.toISOString()}>{formatDate(post.data.published)}</time>
-        </li>
-      ))}
+      {taggedPosts.map((post) => {
+        const translation = translationsById.get(post.id);
+        return (
+          <li>
+            <a href={`/posts/${post.id}/`}>
+              <span class="en-text">{post.data.title}</span>
+              <span class="zh-text">{translation?.data.title ?? post.data.title}</span>
+            </a>
+            <time class="en-text" datetime={post.data.published.toISOString()}>
+              {formatDate(post.data.published)}
+            </time>
+            <time class="zh-text" datetime={post.data.published.toISOString()}>
+              {formatDateZh(post.data.published)}
+            </time>
+          </li>
+        );
+      })}
     </ol>
-    <a class="back-link" href="/tags/">← All tags</a>
+    <a class="back-link" href="/tags/">
+      ← <span class="en-text">All tags</span><span class="zh-text">全部标签</span>
+    </a>
   </section>
 </BaseLayout>

@@ -2,11 +2,19 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Page not found">
+<BaseLayout title="Page not found" titleZh="页面未找到">
   <section class="page not-found">
     <p class="error-code">404</p>
-    <h1>There is nothing here</h1>
-    <p>The link may have changed, or the post may still be on its way.</p>
-    <a class="back-link" href="/">← Back home</a>
+    <h1>
+      <span class="en-text">There is nothing here</span>
+      <span class="zh-text">这里什么也没有</span>
+    </h1>
+    <p>
+      <span class="en-text">The link may have changed, or the post may still be on its way.</span>
+      <span class="zh-text">链接可能已经改变，或者这篇文章还在路上。</span>
+    </p>
+    <a class="back-link" href="/">
+      ← <span class="en-text">Back home</span><span class="zh-text">返回首页</span>
+    </a>
   </section>
 </BaseLayout>

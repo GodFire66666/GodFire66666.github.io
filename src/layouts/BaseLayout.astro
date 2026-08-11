@@ -5,16 +5,24 @@ import "../styles/global.css";
 
 interface Props {
   title?: string;
+  titleZh?: string;
   description?: string;
+  descriptionZh?: string;
 }
 
-const { title, description = SITE.description } = Astro.props;
+const {
+  title,
+  titleZh,
+  description = SITE.description,
+  descriptionZh = SITE.descriptionZh,
+} = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+const pageTitleZh = titleZh ? `${titleZh} · ${SITE.titleZh}` : SITE.titleZh;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={SITE.language}>
+<html lang={SITE.language} class="lang-en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -28,8 +36,24 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <title>{pageTitle}</title>
+    <script is:inline>
+      try {
+        const language = localStorage.getItem("yucong-site-language");
+        if (language === "zh") {
+          document.documentElement.classList.replace("lang-en", "lang-zh");
+          document.documentElement.lang = "zh-CN";
+        }
+      } catch {
+        // Keep the English default when storage is unavailable.
+      }
+    </script>
   </head>
-  <body>
+  <body
+    data-title-en={pageTitle}
+    data-title-zh={pageTitleZh}
+    data-description-en={description}
+    data-description-zh={descriptionZh}
+  >
     <div class="page-shell">
       <Header />
       <main>
@@ -37,7 +61,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       </main>
       <footer>
         <span>© {new Date().getFullYear()} {SITE.author}</span>
-        <span>Notes that grow over time.</span>
+        <span class="en-text">Notes that grow over time.</span>
+        <span class="zh-text">让笔记随时间生长。</span>
       </footer>
     </div>
   </body>

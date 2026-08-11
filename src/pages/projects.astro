@@ -5,14 +5,23 @@ import { projects } from "../data/projects";
 
 <BaseLayout
   title="Projects"
+  titleZh="项目"
   description="Selected projects designed and built by Yucong Luo."
+  descriptionZh="Yucong Luo 设计与构建的精选项目。"
 >
   <section class="intro projects-intro">
-    <p class="eyebrow">Selected work</p>
-    <h1>Projects</h1>
+    <p class="eyebrow">
+      <span class="en-text">Selected work</span><span class="zh-text">精选作品</span>
+    </p>
+    <h1><span class="en-text">Projects</span><span class="zh-text">项目</span></h1>
     <p>
-      Things I have designed, built, and learned from, across AI research and
-      personal experiments.
+      <span class="en-text">
+        Things I have designed, built, and learned from, across AI research and
+        personal experiments.
+      </span>
+      <span class="zh-text">
+        我在人工智能研究与个人实验中设计、构建并从中学习的作品。
+      </span>
     </p>
   </section>
 
@@ -35,19 +44,33 @@ import { projects } from "../data/projects";
             />
           </a>
           <div class="project-entry-copy">
-            <ul class="project-tags" aria-label="Project categories">
+            <ul class="project-tags en-text" aria-label="Project categories">
               {project.tags.map((tag) => <li>{tag}</li>)}
             </ul>
-            <h2>{project.title}</h2>
-            <p class="project-description">{project.description}</p>
-            <p>{project.details}</p>
+            <ul class="project-tags zh-text" aria-label="项目分类">
+              {project.tagsZh.map((tag) => <li>{tag}</li>)}
+            </ul>
+            <h2>
+              <span class="en-text">{project.title}</span>
+              <span class="zh-text">{project.titleZh}</span>
+            </h2>
+            <p class="project-description">
+              <span class="en-text">{project.description}</span>
+              <span class="zh-text">{project.descriptionZh}</span>
+            </p>
+            <p>
+              <span class="en-text">{project.details}</span>
+              <span class="zh-text">{project.detailsZh}</span>
+            </p>
             <a
               class="project-link"
               href={project.href}
               target="_blank"
               rel="noreferrer"
             >
-              Visit website <span aria-hidden="true">↗</span>
+              <span class="en-text">Visit website</span>
+              <span class="zh-text">访问网站</span>
+              <span aria-hidden="true">↗</span>
             </a>
           </div>
         </article>

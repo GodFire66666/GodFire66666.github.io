@@ -3,14 +3,28 @@ import { getCollection, render } from "astro:content";
 import PostLayout from "../../layouts/PostLayout.astro";
 
 export async function getStaticPaths() {
-  const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
-  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+  const [postEntries, postTranslations] = await Promise.all([
+    getCollection("posts"),
+    getCollection("postsZh"),
+  ]);
+  const posts = postEntries.filter((post) => !post.data.draft);
+  const translationsById = new Map(
+    postTranslations.map((translation) => [translation.id, translation]),
+  );
+
+  return posts.map((post) => {
+    const translation = translationsById.get(post.id);
+    if (!translation) throw new Error(`Missing Chinese translation for ${post.id}`);
+    return { params: { slug: post.id }, props: { post, translation } };
+  });
 }
 
-const { post } = Astro.props;
+const { post, translation } = Astro.props;
 const { Content } = await render(post);
+const { Content: ContentZh } = await render(translation);
 ---
 
-<PostLayout post={post}>
-  <Content />
+<PostLayout post={post} translation={translation}>
+  <div class="en-text"><Content /></div>
+  <div class="zh-text"><ContentZh /></div>
 </PostLayout>

@@ -5,29 +5,53 @@ import { formatDate, tagPath } from "../utils/posts";
 
 interface Props {
   post: CollectionEntry<"posts">;
+  translation: CollectionEntry<"postsZh">;
 }
 
-const { post } = Astro.props;
+const { post, translation } = Astro.props;
 const { title, description, published, updated, tags } = post.data;
+const { formatDateZh, translateTag } = await import("../utils/i18n");
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout
+  title={title}
+  titleZh={translation.data.title}
+  description={description}
+  descriptionZh={translation.data.description}
+>
   <article class="post">
     <header class="post-header">
-      <h1>{title}</h1>
+      <h1>
+        <span class="en-text">{title}</span>
+        <span class="zh-text">{translation.data.title}</span>
+      </h1>
       <p class="post-date">
-        <time datetime={published.toISOString()}>{formatDate(published)}</time>
-        {updated && <span> · Updated {formatDate(updated)}</span>}
+        <time class="en-text" datetime={published.toISOString()}>{formatDate(published)}</time>
+        <time class="zh-text" datetime={published.toISOString()}>{formatDateZh(published)}</time>
+        {updated && (
+          <>
+            <span class="en-text"> · Updated {formatDate(updated)}</span>
+            <span class="zh-text"> · 更新于 {formatDateZh(updated)}</span>
+          </>
+        )}
       </p>
       {tags.length > 0 && (
         <ul class="tag-list" aria-label="Post tags">
-          {tags.map((tag) => <li><a href={tagPath(tag)}>#{tag}</a></li>)}
+          {tags.map((tag) => (
+            <li>
+              <a href={tagPath(tag)}>
+                #<span class="en-text">{tag}</span><span class="zh-text">{translateTag(tag)}</span>
+              </a>
+            </li>
+          ))}
         </ul>
       )}
     </header>
     <div class="prose">
       <slot />
     </div>
-    <a class="back-link" href="/">← All posts</a>
+    <a class="back-link" href="/">
+      ← <span class="en-text">All posts</span><span class="zh-text">全部文章</span>
+    </a>
   </article>
 </BaseLayout>
