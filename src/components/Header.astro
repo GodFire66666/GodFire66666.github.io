@@ -74,6 +74,10 @@ const { overlay = false } = Astro.props;
         language === "en" ? "Switch to Chinese" : "切换到英文",
       );
     }
+
+    window.dispatchEvent(
+      new CustomEvent("site-language-change", { detail: { language } }),
+    );
   }
 
   applyLanguage(currentLanguage());

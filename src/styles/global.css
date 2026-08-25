@@ -241,10 +241,34 @@ h3 { font-size: 1.12rem; }
 }
 
 .hero-role {
+  min-height: 3.25rem;
   margin: 1rem 0 0;
   color: #fff;
   font-size: 1.12rem;
   font-weight: 700;
+}
+
+.typed-text::after {
+  display: inline-block;
+  width: 1px;
+  height: 0.95em;
+  margin-left: 0.14em;
+  background: currentColor;
+  content: "";
+  vertical-align: -0.08em;
+  animation: typed-caret 820ms steps(1, end) infinite;
+}
+
+@keyframes typed-caret {
+  0%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typed-text::after {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 .hero-summary {

@@ -14,6 +14,18 @@ const posts = sortPosts(postEntries.filter((post) => !post.data.draft));
 const translationsById = new Map(
   postTranslations.map((translation) => [translation.id, translation]),
 );
+const typedPhrases = {
+  en: [
+    "Building and training LLM agents.",
+    "Writing in public, learning in motion.",
+    "Making room for life beyond work.",
+  ],
+  zh: [
+    "构建与训练大语言模型智能体。",
+    "公开记录，也持续学习。",
+    "也为工作之外的生活留出空间。",
+  ],
+};
 ---
 
 <BaseLayout immersive>
@@ -35,9 +47,17 @@ const translationsById = new Map(
           <span class="zh-text">大语言模型 · 智能体训练 · 随笔</span>
         </p>
         <h1 id="profile-name">{SITE.author}</h1>
-        <p class="hero-role">
-          <span class="en-text">Building and training LLM agents.</span>
-          <span class="zh-text">构建与训练大语言模型智能体。</span>
+        <p class="hero-role" aria-live="off">
+          <span
+            class="en-text typed-text"
+            data-typed-language="en"
+            data-phrases={JSON.stringify(typedPhrases.en)}
+          >{typedPhrases.en[0]}</span>
+          <span
+            class="zh-text typed-text"
+            data-typed-language="zh"
+            data-phrases={JSON.stringify(typedPhrases.zh)}
+          >{typedPhrases.zh[0]}</span>
         </p>
         <p class="hero-summary">
           <span class="en-text">
@@ -180,3 +200,69 @@ const translationsById = new Map(
   </section>
   </div>
 </BaseLayout>
+
+<script>
+  const typedTargets = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-typed-language]"),
+  );
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let typingTimer: number | undefined;
+  let typingRun = 0;
+
+  function activeLanguage() {
+    return document.documentElement.classList.contains("lang-zh") ? "zh" : "en";
+  }
+
+  function startTyping() {
+    typingRun += 1;
+    const run = typingRun;
+    window.clearTimeout(typingTimer);
+
+    const target = typedTargets.find(
+      (element) => element.dataset.typedLanguage === activeLanguage(),
+    );
+    if (!target) return;
+
+    const phrases = JSON.parse(target.dataset.phrases ?? "[]") as string[];
+    if (phrases.length === 0) return;
+
+    if (reducedMotion.matches) {
+      target.textContent = phrases[0];
+      return;
+    }
+
+    let phraseIndex = 0;
+    let characterIndex = 0;
+    let deleting = false;
+    target.textContent = "";
+
+    const tick = () => {
+      if (run !== typingRun) return;
+
+      const characters = Array.from(phrases[phraseIndex]);
+      let delay = deleting ? 28 : 55;
+
+      if (!deleting && characterIndex < characters.length) {
+        characterIndex += 1;
+      } else if (!deleting) {
+        deleting = true;
+        delay = 1550;
+      } else if (characterIndex > 0) {
+        characterIndex -= 1;
+      } else {
+        deleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        delay = 320;
+      }
+
+      target.textContent = characters.slice(0, characterIndex).join("");
+      typingTimer = window.setTimeout(tick, delay);
+    };
+
+    tick();
+  }
+
+  window.addEventListener("site-language-change", startTyping);
+  reducedMotion.addEventListener("change", startTyping);
+  startTyping();
+</script>
