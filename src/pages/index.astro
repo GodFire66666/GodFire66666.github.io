@@ -16,51 +16,69 @@ const translationsById = new Map(
 );
 ---
 
-<BaseLayout>
-  <section class="profile-intro" aria-labelledby="profile-name">
-    <div class="profile-copy">
-      <p class="eyebrow">
-        <span class="en-text">LLMs, agent training, and notes in public</span>
-        <span class="zh-text">大语言模型、智能体训练与公开笔记</span>
-      </p>
-      <h1 id="profile-name">{SITE.author}</h1>
-      <p class="profile-role">
-        <span class="en-text">LLMs · Agent Training</span>
-        <span class="zh-text">大语言模型 · 智能体训练</span>
-      </p>
-      <p class="profile-summary">
-        <span class="en-text">
-          I work on LLMs and agent training, and write about the data,
-          experiments, and lessons behind building better agents.
-        </span>
-        <span class="zh-text">
-          我从事大语言模型与智能体训练相关工作，并记录构建更好智能体背后的数据、实验与经验。
-        </span>
-      </p>
-      <nav class="profile-links" aria-label="Profile links">
-        <a href={SITE.github}>GitHub</a>
-        <a href={SITE.scholar}>
-          <span class="en-text">Google Scholar</span><span class="zh-text">谷歌学术</span>
-        </a>
-        <a href={SITE.xiaohongshu}>
-          <span class="en-text">Xiaohongshu</span><span class="zh-text">小红书</span>
-        </a>
-        <a href="/about/">
-          <span class="en-text">About</span><span class="zh-text">关于</span>
-        </a>
-      </nav>
-    </div>
+<BaseLayout immersive>
+  <section class="immersive-hero" aria-labelledby="profile-name">
     <img
-      class="profile-photo"
-      src="/avatar.jpg"
-      alt="Yucong Luo"
-      width="160"
-      height="160"
+      class="hero-image"
+      src="/hero-portrait.jpg"
+      alt=""
+      width="1920"
+      height="2880"
+      fetchpriority="high"
+      aria-hidden="true"
     />
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="hero-eyebrow">
+          <span class="en-text">LLMs · Agent Training · Notes</span>
+          <span class="zh-text">大语言模型 · 智能体训练 · 随笔</span>
+        </p>
+        <h1 id="profile-name">{SITE.author}</h1>
+        <p class="hero-role">
+          <span class="en-text">Building and training LLM agents.</span>
+          <span class="zh-text">构建与训练大语言模型智能体。</span>
+        </p>
+        <p class="hero-summary">
+          <span class="en-text">
+            I write about the experiments, tools, and ideas behind my work,
+            alongside the things I care about beyond it.
+          </span>
+          <span class="zh-text">
+            我记录工作中的实验、工具与想法，也分享工作之外真正在意的事物。
+          </span>
+        </p>
+        <nav class="hero-links" aria-label="Profile links">
+          <a href={SITE.github}>GitHub</a>
+          <a href={SITE.scholar}>
+            <span class="en-text">Scholar</span><span class="zh-text">学术主页</span>
+          </a>
+          <a href={SITE.xiaohongshu}>
+            <span class="en-text">Xiaohongshu</span><span class="zh-text">小红书</span>
+          </a>
+          <a href="/about/">
+            <span class="en-text">About</span><span class="zh-text">关于</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+    <a
+      class="hero-scroll"
+      href="#featured-project"
+      aria-label="Scroll to featured project"
+      title="Explore"
+    >
+      <span aria-hidden="true">↓</span>
+    </a>
   </section>
 
+  <div class="home-content">
   {featuredProject && (
-    <section class="home-section" aria-labelledby="featured-project-heading">
+    <section
+      class="home-section"
+      id="featured-project"
+      aria-labelledby="featured-project-heading"
+    >
       <div class="section-heading">
         <h2 id="featured-project-heading">
           <span class="en-text">Featured Project</span><span class="zh-text">精选项目</span>
@@ -160,4 +178,5 @@ const translationsById = new Map(
       })}
     </ol>
   </section>
+  </div>
 </BaseLayout>

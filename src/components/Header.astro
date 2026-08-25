@@ -1,8 +1,14 @@
 ---
 import { SITE } from "../config";
+
+interface Props {
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
 ---
 
-<header class="site-header">
+<header class:list={["site-header", { "site-header--overlay": overlay }]}>
   <a class="site-title" href="/">{SITE.author}</a>
   <nav aria-label="Primary navigation">
     <a href="/projects/">

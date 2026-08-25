@@ -43,6 +43,10 @@ a:hover { color: var(--accent); }
   margin: 0 auto;
 }
 
+.page-shell--immersive {
+  width: 100%;
+}
+
 .site-header {
   display: flex;
   align-items: baseline;
@@ -50,6 +54,32 @@ a:hover { color: var(--accent); }
   gap: 1.5rem;
   padding: 1.35rem 0 0.9rem;
   border-bottom: 1px solid var(--line);
+}
+
+.site-header--overlay {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 50%;
+  width: min(100% - 3rem, 72rem);
+  transform: translateX(-50%);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.site-header--overlay .site-title {
+  color: #fff;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45);
+}
+
+.site-header--overlay .language-toggle {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(10, 14, 17, 0.28);
+  color: #fff;
+}
+
+.site-header--overlay .language-option.active {
+  background: #fff;
+  color: #29323a;
 }
 
 .site-title {
@@ -71,6 +101,14 @@ a:hover { color: var(--accent); }
   color: #515c67;
   font-size: 0.92rem;
   text-decoration: none;
+}
+
+.site-header.site-header--overlay nav a {
+  color: #fff;
+}
+
+.site-header.site-header--overlay nav a:hover {
+  color: #f2c5b7;
 }
 
 .language-toggle {
@@ -118,6 +156,10 @@ main {
   padding: 3rem 0 4.5rem;
 }
 
+.main--immersive {
+  padding: 0;
+}
+
 h1, h2, h3 {
   margin: 0;
   color: var(--ink);
@@ -137,17 +179,53 @@ h3 { font-size: 1.12rem; }
   color: var(--muted);
 }
 
-.profile-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 10rem;
-  gap: 3rem;
-  align-items: center;
-  padding: 1rem 0 3.25rem;
+.immersive-hero {
+  position: relative;
+  height: clamp(30rem, 88svh, 52rem);
+  min-height: 0;
+  overflow: hidden;
+  background: #171a1a;
+  isolation: isolate;
 }
 
-.eyebrow {
-  margin: 0 0 0.45rem;
-  color: var(--accent-dark);
+.hero-image,
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-image {
+  z-index: -2;
+  object-fit: cover;
+  object-position: center 43%;
+}
+
+.hero-scrim {
+  z-index: -1;
+  background: rgba(8, 12, 15, 0.42);
+}
+
+.hero-inner {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  width: min(100% - 3rem, 72rem);
+  height: 100%;
+  margin: 0 auto;
+  padding: 7rem 0 4.3rem;
+}
+
+.hero-copy {
+  width: min(100%, 31rem);
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.48);
+}
+
+.hero-eyebrow {
+  margin: 0 0 0.65rem;
+  color: #f1b6a5;
   font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
@@ -155,53 +233,76 @@ h3 { font-size: 1.12rem; }
   text-transform: uppercase;
 }
 
-.profile-intro h1 {
-  font-size: 3.2rem;
-  line-height: 1.08;
+.hero-copy h1 {
+  color: #fff;
+  font-size: 5.7rem;
+  line-height: 0.98;
+  text-wrap: balance;
 }
 
-.profile-role {
-  margin: 0.8rem 0 0;
-  color: #4f5c69;
-  font-size: 1.05rem;
+.hero-role {
+  margin: 1rem 0 0;
+  color: #fff;
+  font-size: 1.12rem;
   font-weight: 700;
 }
 
-.profile-summary {
-  max-width: 32rem;
-  margin: 1rem 0 0;
-  color: #46525e;
-  font-size: 1.02rem;
-  line-height: 1.62;
+.hero-summary {
+  max-width: 29rem;
+  margin: 0.75rem 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.98rem;
+  line-height: 1.58;
 }
 
-.profile-links {
+.hero-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem 1.25rem;
-  margin-top: 1.25rem;
+  gap: 0.55rem 1.15rem;
+  margin-top: 1.15rem;
 }
 
-.profile-links a {
-  color: var(--accent-dark);
+.hero-links a {
+  color: #fff;
   font-weight: 700;
   text-decoration: none;
 }
 
-.profile-links a::after {
+.hero-links a:hover {
+  color: #f2c5b7;
+}
+
+.hero-links a::after {
   content: " \2197";
   font-size: 0.8em;
 }
 
-.profile-links a[href^="/"]::after { content: " \2192"; }
+.hero-links a[href^="/"]::after { content: " \2192"; }
 
-.profile-photo {
-  display: block;
-  width: 10rem;
-  height: 10rem;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  object-fit: cover;
+.hero-scroll {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  transform: translateX(-50%);
+  color: #fff;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 1.25rem;
+  line-height: 2.4rem;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+
+.hero-scroll:hover {
+  color: #f2c5b7;
+}
+
+.home-content {
+  width: min(100% - 3rem, 50rem);
+  margin: 0 auto;
+  padding: 3.5rem 0 4.5rem;
 }
 
 .section-heading {
@@ -468,21 +569,16 @@ footer {
   font-size: 0.78rem;
 }
 
+.page-shell--immersive footer {
+  width: min(100% - 3rem, 50rem);
+  margin: 0 auto;
+}
+
 @media (max-width: 700px) {
-  .profile-intro {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 1.5rem;
-    align-items: flex-start;
-    padding: 0 0 2.5rem;
-  }
-
-  .profile-photo {
-    width: 7.5rem;
-    height: 7.5rem;
-  }
-
-  .profile-intro h1 { font-size: 2.55rem; }
+  .hero-image { object-position: center 39%; }
+  .hero-inner { justify-content: flex-start; }
+  .hero-copy { width: min(100%, 27rem); }
+  .hero-copy h1 { font-size: 4.25rem; }
 
   .featured-project,
   .project-entry {
@@ -496,17 +592,44 @@ footer {
 @media (max-width: 560px) {
   html { font-size: 17px; }
   .page-shell { width: min(100% - 2rem, 50rem); }
+  .page-shell--immersive { width: 100%; }
 
   .site-header {
     display: block;
     padding-top: 0.9rem;
   }
 
+  .site-header--overlay {
+    width: calc(100% - 2rem);
+  }
+
   .site-header nav { margin-top: 0.4rem; }
   main { padding-top: 2rem; }
 
-  .profile-role { font-size: 0.96rem; }
-  .profile-summary { font-size: 1rem; }
+  .main--immersive { padding-top: 0; }
+
+  .immersive-hero {
+    height: clamp(31rem, 90svh, 44rem);
+  }
+
+  .hero-image { object-position: 47% 37%; }
+
+  .hero-scrim { background: rgba(7, 11, 14, 0.5); }
+
+  .hero-inner {
+    width: calc(100% - 2rem);
+    padding: 8.4rem 0 3.8rem;
+  }
+
+  .hero-copy h1 { font-size: 3.55rem; }
+  .hero-role { font-size: 1rem; }
+  .hero-summary { font-size: 0.92rem; }
+  .hero-links { gap: 0.45rem 0.85rem; }
+
+  .home-content {
+    width: min(100% - 2rem, 50rem);
+    padding-top: 2.75rem;
+  }
 
   .section-heading { margin-bottom: 1.35rem; }
   .compact-list li, footer { display: block; }
@@ -514,5 +637,9 @@ footer {
   .compact-list time, footer span {
     display: block;
     margin-top: 0.2rem;
+  }
+
+  .page-shell--immersive footer {
+    width: min(100% - 2rem, 50rem);
   }
 }
