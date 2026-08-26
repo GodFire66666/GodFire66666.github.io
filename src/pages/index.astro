@@ -16,14 +16,20 @@ const translationsById = new Map(
 );
 const typedPhrases = {
   en: [
-    "Building and training LLM agents.",
-    "Writing in public, learning in motion.",
-    "Making room for life beyond work.",
+    "Life is lived in the journey; the result is only a postcard.",
+    "Stay curious. Stay honest.",
+    "Learn through uncertainty. Move forward through truth.",
+    "Work with purpose. Live with attention.",
+    "We write not to preserve the past, but to notice how we change.",
+    "Let action answer doubt, and time test our choices.",
   ],
   zh: [
-    "构建与训练大语言模型智能体。",
-    "公开记录，也持续学习。",
-    "也为工作之外的生活留出空间。",
+    "人生重在体验，过程是风景，结果只是明信片。",
+    "保持好奇，也保持诚实。",
+    "在不确定里学习，在真实中前行。",
+    "认真工作，也认真生活。",
+    "记录不是为了留住过去，而是为了看见自己如何改变。",
+    "让行动回答犹豫，让时间验证选择。",
   ],
 };
 ---
@@ -231,7 +237,7 @@ const typedPhrases = {
       return;
     }
 
-    let phraseIndex = 0;
+    let phraseIndex = Math.floor(Math.random() * phrases.length);
     let characterIndex = 0;
     let deleting = false;
     target.textContent = "";
