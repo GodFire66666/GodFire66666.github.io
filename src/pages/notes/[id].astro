@@ -1,0 +1,89 @@
+---
+import { formatNoteDate, xiaohongshuPosts } from "../../data/xiaohongshu";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  return xiaohongshuPosts.map((post, index) => ({
+    params: { id: post.id },
+    props: {
+      post,
+      previous: xiaohongshuPosts[index + 1],
+      next: xiaohongshuPosts[index - 1],
+    },
+  }));
+}
+
+const { post, previous, next } = Astro.props;
+const description =
+  post.body.replace(/\s+/g, " ").trim().slice(0, 150) ||
+  `A visual note by Yucong Luo with ${post.images.length || post.videos.length} media items.`;
+---
+
+<BaseLayout
+  title={post.title}
+  titleZh={post.title}
+  description={description}
+  descriptionZh={description}
+>
+  <article class="xhs-note">
+    <header class="xhs-note-header">
+      <a class="notes-back" href="/notes/">
+        <span aria-hidden="true">←</span>
+        <span class="en-text">All notes</span><span class="zh-text">全部随笔</span>
+      </a>
+      <h1>{post.title}</h1>
+      <div class="xhs-note-meta">
+        <time datetime={post.publishedAt}>
+          <span class="en-text">{formatNoteDate(post.publishedAt, "en")}</span>
+          <span class="zh-text">{formatNoteDate(post.publishedAt, "zh")}</span>
+        </time>
+        <span aria-hidden="true">·</span>
+        <a href={post.source} target="_blank" rel="noreferrer">
+          <span class="en-text">Original on Xiaohongshu</span>
+          <span class="zh-text">小红书原文</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    {post.body && <p class="xhs-note-body">{post.body}</p>}
+
+    <div class="xhs-note-media">
+      {post.images.map((image, index) => (
+        <figure>
+          <img
+            src={image}
+            alt={`${post.title}, image ${index + 1}`}
+            width="1080"
+            height="1440"
+            loading={index === 0 ? "eager" : "lazy"}
+          />
+        </figure>
+      ))}
+      {post.videos.map((video) => (
+        <video src={video} controls playsinline preload="metadata"></video>
+      ))}
+    </div>
+
+    <nav class="note-pagination" aria-label="Adjacent notes">
+      {previous ? (
+        <a href={`/notes/${previous.id}/`}>
+          <span class="pagination-label">
+            <span aria-hidden="true">←</span>
+            <span class="en-text">Older</span><span class="zh-text">上一篇</span>
+          </span>
+          <strong>{previous.title}</strong>
+        </a>
+      ) : <span></span>}
+      {next && (
+        <a class="note-pagination-next" href={`/notes/${next.id}/`}>
+          <span class="pagination-label">
+            <span class="en-text">Newer</span><span class="zh-text">下一篇</span>
+            <span aria-hidden="true">→</span>
+          </span>
+          <strong>{next.title}</strong>
+        </a>
+      )}
+    </nav>
+  </article>
+</BaseLayout>

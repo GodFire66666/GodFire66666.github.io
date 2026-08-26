@@ -1,0 +1,52 @@
+---
+import type { XiaohongshuPost } from "../data/xiaohongshu";
+import { formatNoteDate, noteExcerpt } from "../data/xiaohongshu";
+
+interface Props {
+  post: XiaohongshuPost;
+  compact?: boolean;
+}
+
+const { post, compact = false } = Astro.props;
+const href = `/notes/${post.id}/`;
+---
+
+<article class:list={["note-card", { "note-card--compact": compact }] }>
+  <a class="note-card-media" href={href} aria-label={post.title}>
+    {post.images[0] ? (
+      <img
+        src={post.images[0]}
+        alt=""
+        width="1080"
+        height="1440"
+        loading="lazy"
+      />
+    ) : post.videos[0] ? (
+      <video
+        src={post.videos[0]}
+        muted
+        playsinline
+        preload="metadata"
+        aria-hidden="true"
+      ></video>
+    ) : (
+      <span class="note-card-placeholder" aria-hidden="true">Notes</span>
+    )}
+    {post.mediaType === "video" && (
+      <span class="note-card-kind">
+        <span class="en-text">Video</span><span class="zh-text">视频</span>
+      </span>
+    )}
+  </a>
+  <div class="note-card-copy">
+    <time datetime={post.publishedAt}>
+      <span class="en-text">{formatNoteDate(post.publishedAt, "en")}</span>
+      <span class="zh-text">{formatNoteDate(post.publishedAt, "zh")}</span>
+    </time>
+    <h3><a href={href}>{post.title}</a></h3>
+    <p>
+      <span class="en-text">{noteExcerpt(post)}</span>
+      <span class="zh-text">{post.body.replace(/\s+/g, " ").trim().slice(0, 92) || `共 ${post.images.length || post.videos.length} 个媒体文件`}</span>
+    </p>
+  </div>
+</article>

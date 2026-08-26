@@ -47,6 +47,10 @@ a:hover { color: var(--accent); }
   width: 100%;
 }
 
+.page-shell--wide {
+  width: min(100% - 3rem, 72rem);
+}
+
 .site-header {
   display: flex;
   align-items: baseline;
@@ -411,6 +415,232 @@ h3 { font-size: 1.12rem; }
   text-decoration: none;
 }
 
+.home-notes-grid,
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.2rem 1.2rem;
+}
+
+.note-card {
+  min-width: 0;
+}
+
+.note-card-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #e9edef;
+  text-decoration: none;
+}
+
+.note-card-media img,
+.note-card-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.note-card-media:hover img,
+.note-card-media:hover video {
+  transform: scale(1.015);
+}
+
+.note-card-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.note-card-kind {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  padding: 0.18rem 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 3px;
+  background: rgba(23, 28, 31, 0.72);
+  color: #fff;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
+.note-card-copy {
+  padding-top: 0.72rem;
+}
+
+.note-card-copy time,
+.notes-kicker,
+.notes-count,
+.xhs-note-meta,
+.pagination-label {
+  color: var(--muted);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.72rem;
+}
+
+.note-card-copy h3 {
+  margin-top: 0.18rem;
+  font-size: 1rem;
+  line-height: 1.38;
+}
+
+.note-card-copy h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.note-card-copy h3 a:hover {
+  color: var(--accent-dark);
+}
+
+.note-card-copy p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.32rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notes-intro {
+  max-width: 39rem;
+  margin-bottom: 2.8rem;
+}
+
+.notes-kicker {
+  margin: 0 0 0.45rem;
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.notes-intro h1 {
+  font-size: 2.4rem;
+}
+
+.notes-intro > p:not(.notes-kicker) {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+}
+
+.notes-count {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  margin-top: 1.25rem;
+}
+
+.notes-count > span:first-child {
+  color: var(--ink);
+  font-family: Georgia, "Noto Serif SC", "Songti SC", STSong, serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.xhs-note {
+  max-width: 43rem;
+  margin: 0 auto;
+}
+
+.xhs-note-header {
+  margin-bottom: 2.2rem;
+}
+
+.notes-back {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.xhs-note-header h1 {
+  max-width: 38rem;
+  font-size: 2.2rem;
+  text-wrap: balance;
+}
+
+.xhs-note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.xhs-note-meta a {
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.xhs-note-body {
+  margin: 0 0 2.2rem;
+  font-size: 1.03rem;
+  line-height: 1.82;
+  white-space: pre-wrap;
+}
+
+.xhs-note-media {
+  display: grid;
+  gap: 1rem;
+}
+
+.xhs-note-media figure {
+  margin: 0;
+}
+
+.xhs-note-media img,
+.xhs-note-media video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #111;
+}
+
+.note-pagination {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 3.5rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+
+.note-pagination a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.note-pagination a:hover {
+  color: var(--accent-dark);
+}
+
+.note-pagination strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.note-pagination-next {
+  text-align: right;
+}
+
 .projects-intro { max-width: 36rem; }
 
 .project-list {
@@ -611,12 +841,18 @@ footer {
 
   .featured-project { gap: 1.25rem; }
   .project-entry { gap: 1.4rem; }
+
+  .home-notes-grid,
+  .notes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
   html { font-size: 17px; }
   .page-shell { width: min(100% - 2rem, 50rem); }
   .page-shell--immersive { width: 100%; }
+  .page-shell--wide { width: calc(100% - 2rem); }
 
   .site-header {
     display: block;
@@ -656,6 +892,48 @@ footer {
   }
 
   .section-heading { margin-bottom: 1.35rem; }
+
+  .home-notes-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .note-card--compact {
+    display: grid;
+    grid-template-columns: 7.1rem minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+
+  .note-card--compact .note-card-copy {
+    padding-top: 0;
+  }
+
+  .notes-grid {
+    gap: 1.65rem 0.7rem;
+  }
+
+  .notes-grid .note-card-copy p {
+    display: none;
+  }
+
+  .notes-grid .note-card-copy h3 {
+    font-size: 0.9rem;
+  }
+
+  .notes-intro {
+    margin-bottom: 2rem;
+  }
+
+  .notes-intro h1,
+  .xhs-note-header h1 {
+    font-size: 1.85rem;
+  }
+
+  .note-pagination {
+    gap: 1rem;
+  }
+
   .compact-list li, footer { display: block; }
 
   .compact-list time, footer span {

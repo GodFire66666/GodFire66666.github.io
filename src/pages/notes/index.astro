@@ -1,0 +1,44 @@
+---
+import NoteCard from "../../components/NoteCard.astro";
+import { xiaohongshuPosts } from "../../data/xiaohongshu";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  wide
+  title="Notes"
+  titleZh="随笔"
+  description="Personal notes, images, and reflections by Yucong Luo."
+  descriptionZh="Yucong Luo 的生活记录、图片与随笔。"
+>
+  <section class="notes-page" aria-labelledby="notes-heading">
+    <header class="notes-intro">
+      <p class="notes-kicker">
+        <span class="en-text">Life · Ideas · Images</span>
+        <span class="zh-text">生活 · 思考 · 图像</span>
+      </p>
+      <h1 id="notes-heading">
+        <span class="en-text">Notes from elsewhere</span>
+        <span class="zh-text">站外随笔</span>
+      </h1>
+      <p>
+        <span class="en-text">
+          Shorter thoughts and visual records, originally shared on Xiaohongshu.
+          The original Chinese is preserved here.
+        </span>
+        <span class="zh-text">
+          一些更短的想法、生活片段与图像记录，原发布于小红书。
+        </span>
+      </p>
+      <div class="notes-count">
+        <span>{xiaohongshuPosts.length}</span>
+        <span class="en-text">public notes</span>
+        <span class="zh-text">篇公开随笔</span>
+      </div>
+    </header>
+
+    <div class="notes-grid">
+      {xiaohongshuPosts.map((post) => <NoteCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>

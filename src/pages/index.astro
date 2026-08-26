@@ -1,8 +1,10 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import NoteCard from "../components/NoteCard.astro";
 import { SITE } from "../config";
 import { featuredProject } from "../data/projects";
+import { xiaohongshuPosts } from "../data/xiaohongshu";
 import { formatDateZh, translateTag } from "../utils/i18n";
 import { formatDate, sortPosts, tagPath } from "../utils/posts";
 
@@ -11,6 +13,7 @@ const [postEntries, postTranslations] = await Promise.all([
   getCollection("postsZh"),
 ]);
 const posts = sortPosts(postEntries.filter((post) => !post.data.draft));
+const recentNotes = xiaohongshuPosts.slice(0, 3);
 const translationsById = new Map(
   postTranslations.map((translation) => [translation.id, translation]),
 );
@@ -157,6 +160,20 @@ const typedPhrases = {
       </article>
     </section>
   )}
+
+  <section class="home-section" aria-labelledby="recent-notes-heading">
+    <div class="section-heading">
+      <h2 id="recent-notes-heading">
+        <span class="en-text">Recent Notes</span><span class="zh-text">最近随笔</span>
+      </h2>
+      <a href="/notes/">
+        <span class="en-text">All notes</span><span class="zh-text">全部随笔</span>
+      </a>
+    </div>
+    <div class="home-notes-grid">
+      {recentNotes.map((post) => <NoteCard post={post} compact />)}
+    </div>
+  </section>
 
   <section class="home-section" aria-labelledby="writing-heading">
     <div class="section-heading">

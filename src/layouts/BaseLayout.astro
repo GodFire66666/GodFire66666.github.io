@@ -9,6 +9,7 @@ interface Props {
   description?: string;
   descriptionZh?: string;
   immersive?: boolean;
+  wide?: boolean;
 }
 
 const {
@@ -17,6 +18,7 @@ const {
   description = SITE.description,
   descriptionZh = SITE.descriptionZh,
   immersive = false,
+  wide = false,
 } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
 const pageTitleZh = titleZh ? `${titleZh} · ${SITE.titleZh}` : SITE.titleZh;
@@ -56,7 +58,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     data-description-en={description}
     data-description-zh={descriptionZh}
   >
-    <div class:list={["page-shell", { "page-shell--immersive": immersive }]}>
+    <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--wide": wide }]}>
       <Header overlay={immersive} />
       <main class:list={{ "main--immersive": immersive }}>
         <slot />
