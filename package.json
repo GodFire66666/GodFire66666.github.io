@@ -11,10 +11,13 @@
   "dependencies": {
     "@astrojs/rss": "latest",
     "@astrojs/sitemap": "latest",
-    "astro": "latest"
+    "astro": "latest",
+    "gsap": "^3.15.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@astrojs/check": "latest",
+    "@types/three": "^0.185.4",
     "typescript": "latest"
   }
 }
