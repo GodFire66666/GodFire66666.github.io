@@ -4,7 +4,9 @@ import { SITE } from "../config";
 import { featuredProject } from "../data/projects";
 import { xiaohongshuPosts } from "../data/xiaohongshu";
 
-const latestNote = xiaohongshuPosts[0];
+const notesCover = xiaohongshuPosts.find(
+  (post) => post.id === "6a803b2c0000000026034f93",
+);
 const scenes = [
   {
     id: "yucong",
@@ -78,9 +80,9 @@ const scenes = [
     action: "Browse all notes",
     actionZh: "浏览全部随笔",
     image:
-      latestNote?.images[0] ??
+      notesCover?.images[0] ??
       "/xiaohongshu/6a803b2c0000000026034f93/images/01.webp",
-    imageAlt: latestNote?.title ?? "Cover image from Yucong's recent notes",
+    imageAlt: notesCover?.title ?? "Sunset note titled Lose yourself to find yourself",
     background: "#dfeadf",
     foreground: "#294139",
     titleColor: "#174b34",
