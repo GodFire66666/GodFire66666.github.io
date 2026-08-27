@@ -322,7 +322,7 @@ export async function startPortfolioReel() {
       const centerCorrection = -0.06 * offset * group.userData.baseHeight;
 
       group.position.set(0, -offset * desktopStep + centerCorrection, 0);
-      group.rotation.set(0, 0, -0.06);
+      group.rotation.set(0, 0, 0.015);
       group.scale.set(frameWidth, frameHeight, 1);
       group.visible = visibleGroups.has(groupIndex);
       group.userData.material.uniforms.uDistance.value = distance;
