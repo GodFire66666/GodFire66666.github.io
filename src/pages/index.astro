@@ -142,7 +142,17 @@ const scenes = [
           data-progress-index={index}
           aria-label={`Go to ${scene.title}`}
         >
-          <span>{String(index + 1).padStart(2, "0")}</span>
+          <span class="portfolio-progress-label" aria-hidden="true">
+            <span class="en-text">
+              {scene.id === "yucong" ? "Yucong" : scene.title}
+            </span>
+            <span class="zh-text">
+              {scene.id === "yucong" ? "Yucong" : scene.titleZh}
+            </span>
+          </span>
+          <span class="portfolio-progress-index">
+            {String(index + 1).padStart(2, "0")}
+          </span>
         </a>
       ))}
     </nav>

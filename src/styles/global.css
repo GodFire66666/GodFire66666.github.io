@@ -1203,14 +1203,23 @@ html.lang-zh #tarot .portfolio-copy h1 {
   right: clamp(3rem, 6vw, 6rem);
   display: grid;
   gap: 0.42rem;
+  width: 1.2rem;
   transform: translateY(-50%);
+  transition: width 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portfolio-progress:hover,
+.portfolio-progress:focus-within {
+  width: 10rem;
 }
 
 .portfolio-progress a {
-  display: grid;
-  width: 1.2rem;
+  position: relative;
+  display: flex;
+  width: 100%;
   height: 1.45rem;
-  place-items: center;
+  align-items: center;
+  justify-content: flex-end;
   text-decoration: none;
   opacity: 1;
   transition: transform 260ms ease;
@@ -1228,13 +1237,47 @@ html.lang-zh #tarot .portfolio-copy h1 {
     transform 260ms ease;
 }
 
-.portfolio-progress a span {
+.portfolio-progress-index {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+.portfolio-progress-label {
+  position: absolute;
+  top: 50%;
+  right: 1.75rem;
+  color: color-mix(in srgb, var(--portfolio-fg) 52%, transparent);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-align: right;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0.5rem, -50%);
+  transition:
+    color 260ms ease,
+    opacity 220ms ease,
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 220ms ease;
+}
+
+.portfolio-progress:hover .portfolio-progress-label,
+.portfolio-progress:focus-within .portfolio-progress-label {
+  opacity: 0.58;
+  visibility: visible;
+  transform: translate(0, -50%);
+}
+
+.portfolio-progress:hover a.active .portfolio-progress-label,
+.portfolio-progress:focus-within a.active .portfolio-progress-label {
+  color: var(--portfolio-fg);
+  opacity: 1;
 }
 
 .portfolio-progress a.active {
@@ -1366,7 +1409,21 @@ html.portfolio-home-active .page-shell--immersive footer {
     bottom: 1rem;
     grid-auto-flow: column;
     gap: 0.2rem;
+    width: auto;
     transform: none;
+  }
+
+  .portfolio-progress:hover,
+  .portfolio-progress:focus-within {
+    width: auto;
+  }
+
+  .portfolio-progress a {
+    width: 1.2rem;
+  }
+
+  .portfolio-progress-label {
+    display: none;
   }
 
   .portfolio-progress a.active {
