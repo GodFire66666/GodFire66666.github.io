@@ -4,6 +4,7 @@ import {
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
+  Raycaster,
   Scene,
   ShaderMaterial,
   SRGBColorSpace,
@@ -21,8 +22,10 @@ type ReelGroup = Group & {
     brightness: number;
     focusX: number;
     focusY: number;
+    href: string;
     material: ShaderMaterial;
     mobileX: number;
+    opensExternally: boolean;
     texture: Texture;
   };
 };
@@ -204,8 +207,10 @@ export async function startPortfolioReel() {
       brightness: Number(scene?.dataset.sceneBrightness ?? "1"),
       focusX: Number(scene?.dataset.sceneFocusX ?? "0.5"),
       focusY: Number(scene?.dataset.sceneFocusY ?? "0.5"),
+      href: scene?.dataset.sceneHref ?? "",
       material,
       mobileX: Number(scene?.dataset.sceneMobileX ?? "0"),
+      opensExternally: scene?.dataset.sceneExternal === "true",
       texture,
     };
     reelStage.add(group);
@@ -217,6 +222,8 @@ export async function startPortfolioReel() {
     window.innerHeight * 0.5,
   );
   const smoothedPointer = pointer.clone();
+  const pointerNdc = new Vector2();
+  const raycaster = new Raycaster();
   const initialIndex = Math.max(
     0,
     sceneElements.findIndex((scene) => scene.classList.contains("active")),
@@ -494,14 +501,68 @@ export async function startPortfolioReel() {
     wheelIdleTimer = window.setTimeout(settleWheelGesture, WHEEL_IDLE_MS);
   }
 
+  function isActiveCardHit(clientX: number, clientY: number) {
+    if (
+      isMobile() ||
+      Math.abs(renderedProgress - committedVirtualIndex) > 0.08
+    )
+      return false;
+
+    pointerNdc.set(
+      (clientX / window.innerWidth) * 2 - 1,
+      1 - (clientY / window.innerHeight) * 2,
+    );
+    webglScene.updateMatrixWorld(true);
+    raycaster.setFromCamera(pointerNdc, camera);
+    return (
+      raycaster.intersectObject(groups[modulo(committedVirtualIndex)], true)
+        .length > 0
+    );
+  }
+
+  function isInteractiveTarget(target: EventTarget | null) {
+    return (
+      target instanceof Element &&
+      Boolean(target.closest("a, button, input, select, textarea"))
+    );
+  }
+
+  function openActiveCard() {
+    const activeGroup = groups[modulo(committedVirtualIndex)];
+    const { href, opensExternally } = activeGroup.userData;
+    if (!href) return;
+    if (opensExternally) {
+      window.open(href, "_blank", "noopener,noreferrer");
+      return;
+    }
+    window.location.assign(href);
+  }
+
   window.addEventListener("wheel", handleWheel, { passive: false });
   window.addEventListener(
     "pointermove",
     (event) => {
-      if (!isMobile()) pointer.set(event.clientX, event.clientY);
+      if (isMobile()) return;
+      pointer.set(event.clientX, event.clientY);
+      home.classList.toggle(
+        "reel-card-hovered",
+        !isInteractiveTarget(event.target) &&
+          isActiveCardHit(event.clientX, event.clientY),
+      );
     },
     { passive: true },
   );
+  window.addEventListener("pointerleave", () => {
+    home.classList.remove("reel-card-hovered");
+  });
+  window.addEventListener("click", (event) => {
+    if (
+      isInteractiveTarget(event.target) ||
+      !isActiveCardHit(event.clientX, event.clientY)
+    )
+      return;
+    openActiveCard();
+  });
   window.addEventListener("resize", resize, { passive: true });
   window.addEventListener("portfolio-reel-go-to", (event) => {
     const detail = (event as CustomEvent<ReelGoToDetail>).detail;

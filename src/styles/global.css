@@ -990,6 +990,10 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
   opacity: 1;
 }
 
+.portfolio-home.reel-card-hovered {
+  cursor: pointer;
+}
+
 .portfolio-scenes {
   position: absolute;
   z-index: 2;

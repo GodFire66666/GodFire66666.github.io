@@ -164,6 +164,8 @@ const scenes = [
           data-scene-mobile-x={scene.mobileX}
           data-scene-focus-x={scene.focusX}
           data-scene-focus-y={scene.focusY}
+          data-scene-href={scene.href}
+          data-scene-external={scene.external ? "true" : "false"}
           data-scene-theme={scene.theme}
           style={`--scene-fg: ${scene.foreground}; --scene-title: ${scene.titleColor}; --scene-accent: ${scene.accent};`}
           aria-hidden={index === 0 ? "false" : "true"}
