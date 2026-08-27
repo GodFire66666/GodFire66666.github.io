@@ -277,7 +277,7 @@ export async function startPortfolioReel() {
       planeWidth = Math.min(maxWidth, maxHeight * (4 / 3));
       group.userData.baseHeight = planeWidth / (4 / 3);
     } else {
-      planeWidth = visibleWidth * 0.46;
+      planeWidth = visibleWidth * 0.42;
       group.userData.baseHeight = planeWidth / FRAME_ASPECT;
     }
     group.userData.baseWidth = planeWidth;
@@ -394,8 +394,8 @@ export async function startPortfolioReel() {
       reelStage.rotation.set(0, 0, 0);
     } else {
       desktopStep = groups[0].userData.baseHeight * 1.15;
-      reelStage.position.set(visibleWidth * 0.16, 0, 0.3);
-      reelStage.rotation.set(-0.41, -0.87, 0.06);
+      reelStage.position.set(visibleWidth * 0.18, 0, 0.3);
+      reelStage.rotation.set(-0.34, 0.12, 0.065);
     }
 
     groups.forEach((group) => {
