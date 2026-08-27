@@ -21,10 +21,16 @@ const scenes = [
     actionZh: "认识 Yucong",
     image: "/hero-portrait.jpg",
     imageAlt: "Portrait of Yucong Luo in a black sweater",
-    background: "#202728",
-    foreground: "#f6f3ed",
-    accent: "#efb39f",
+    background: "#3d4545",
+    foreground: "#f0ece5",
+    titleColor: "#f5f0e8",
+    accent: "#d8a48b",
     brightness: 1,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.5,
+    focusY: 0.59,
     theme: "dark",
   },
   {
@@ -45,10 +51,16 @@ const scenes = [
     image: featuredProject?.image ?? "/projects/yucongs-tarot.jpg",
     imageAlt:
       featuredProject?.imageAlt ?? "The dark interface of Yucong's Tarot",
-    background: "#171426",
-    foreground: "#faf6eb",
-    accent: "#d9bd78",
-    brightness: 1.14,
+    background: "#221e34",
+    foreground: "#eee9df",
+    titleColor: "#f3ead7",
+    accent: "#d6b35f",
+    brightness: 1.3,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.5,
+    focusY: 0.5,
     theme: "dark",
     external: true,
   },
@@ -69,10 +81,16 @@ const scenes = [
       latestNote?.images[0] ??
       "/xiaohongshu/6a803b2c0000000026034f93/images/01.webp",
     imageAlt: latestNote?.title ?? "Cover image from Yucong's recent notes",
-    background: "#e9f1e9",
-    foreground: "#17322d",
-    accent: "#347864",
+    background: "#dfeadf",
+    foreground: "#294139",
+    titleColor: "#174b34",
+    accent: "#a96257",
     brightness: 1,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.5,
+    focusY: 0.5,
     theme: "light",
   },
   {
@@ -88,13 +106,18 @@ const scenes = [
     href: "/posts/start-writing/",
     action: "Start reading",
     actionZh: "开始阅读",
-    image:
-      "/xiaohongshu/6a58acc200000000110153e6/images/01.webp",
-    imageAlt: "A long-form note written by Yucong Luo",
-    background: "#f4ecee",
-    foreground: "#442b35",
-    accent: "#a44867",
+    image: "/projects/writing-cover.webp",
+    imageAlt: "Editorial cover for Yucong Luo's long-form writing",
+    background: "#eee4e7",
+    foreground: "#49343b",
+    titleColor: "#4d2936",
+    accent: "#a04f6a",
     brightness: 1,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.5,
+    focusY: 0.5,
     theme: "light",
   },
 ];
@@ -104,7 +127,7 @@ const scenes = [
   <div
     class="portfolio-home"
     data-portfolio-home
-    style={`--portfolio-bg: ${scenes[0].background}; --portfolio-fg: ${scenes[0].foreground}; --portfolio-accent: ${scenes[0].accent};`}
+    style={`--portfolio-bg: ${scenes[0].background}; --portfolio-fg: ${scenes[0].foreground}; --portfolio-title: ${scenes[0].titleColor}; --portfolio-accent: ${scenes[0].accent};`}
   >
     <div class="portfolio-backdrop" aria-hidden="true"></div>
     <canvas class="portfolio-canvas" data-portfolio-canvas aria-hidden="true"></canvas>
@@ -131,9 +154,18 @@ const scenes = [
           data-scene-image={scene.image}
           data-scene-background={scene.background}
           data-scene-foreground={scene.foreground}
+          data-scene-title={scene.titleColor}
           data-scene-accent={scene.accent}
           data-scene-brightness={scene.brightness}
+          data-scene-scale={scene.scale}
+          data-scene-rotation={scene.rotation}
+          data-scene-mobile-x={scene.mobileX}
+          data-scene-focus-x={scene.focusX}
+          data-scene-focus-y={scene.focusY}
           data-scene-theme={scene.theme}
+          style={`--scene-fg: ${scene.foreground}; --scene-title: ${scene.titleColor}; --scene-accent: ${scene.accent};`}
+          aria-hidden={index === 0 ? "false" : "true"}
+          inert={index !== 0}
           aria-labelledby={`${scene.id}-title`}
         >
           <div class="portfolio-scene-inner">
@@ -195,16 +227,8 @@ const scenes = [
 
 <script>
   import { gsap } from "gsap";
-  import type {
-    Mesh,
-    MeshBasicMaterial,
-    PlaneGeometry,
-    ShaderMaterial,
-    Texture,
-  } from "three";
 
   const home = document.querySelector<HTMLElement>("[data-portfolio-home]");
-  const canvas = document.querySelector<HTMLCanvasElement>("[data-portfolio-canvas]");
   const sceneElements = Array.from(
     document.querySelectorAll<HTMLElement>("[data-scene-index]"),
   );
@@ -212,18 +236,56 @@ const scenes = [
     document.querySelectorAll<HTMLElement>("[data-progress-index]"),
   );
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const desktopCanvas = window.matchMedia("(min-width: 761px)");
-  let activeIndex = 0;
+  const hashIndex = sceneElements.findIndex((scene) => `#${scene.id}` === location.hash);
+  let activeIndex = hashIndex >= 0 ? hashIndex : 0;
+  let reelIndex = activeIndex;
+  let transitionLocked = false;
+  let transitionTimer = 0;
+  let touchStartY = 0;
+  let touchCurrentY = 0;
 
   document.documentElement.classList.add("portfolio-home-active");
+  window.scrollTo(0, 0);
 
-  function activateScene(index: number) {
+  function activateScene(index: number, immediate = false) {
     const next = sceneElements[index];
     if (!home || !next) return;
+
+    const previous = sceneElements[activeIndex];
+    const previousCopy = previous?.querySelector<HTMLElement>(".portfolio-copy");
+    const nextCopy = next.querySelector<HTMLElement>(".portfolio-copy");
+    if (!immediate && previousCopy && previous !== next) {
+      gsap.killTweensOf(previousCopy);
+      gsap.to(previousCopy, {
+        opacity: 0,
+        y: -8,
+        duration: 0.16,
+        ease: "power2.out",
+        overwrite: true,
+      });
+    }
+    if (nextCopy) {
+      gsap.killTweensOf(nextCopy);
+      if (immediate) {
+        gsap.set(nextCopy, { opacity: 1, y: 0 });
+      } else {
+        gsap.set(nextCopy, { opacity: 0, y: 14 });
+        gsap.to(nextCopy, {
+          opacity: 1,
+          y: 0,
+          duration: 0.48,
+          delay: 0.34,
+          ease: "power3.out",
+          overwrite: true,
+        });
+      }
+    }
 
     activeIndex = index;
     sceneElements.forEach((scene, sceneIndex) => {
       scene.classList.toggle("active", sceneIndex === index);
+      scene.inert = sceneIndex !== index;
+      scene.setAttribute("aria-hidden", sceneIndex === index ? "false" : "true");
     });
     progressLinks.forEach((link, linkIndex) => {
       link.classList.toggle("active", linkIndex === index);
@@ -233,248 +295,114 @@ const scenes = [
 
     home.style.setProperty("--portfolio-bg", next.dataset.sceneBackground ?? "#202728");
     home.style.setProperty("--portfolio-fg", next.dataset.sceneForeground ?? "#f6f3ed");
+    home.style.setProperty("--portfolio-title", next.dataset.sceneTitle ?? "#f6f3ed");
     home.style.setProperty("--portfolio-accent", next.dataset.sceneAccent ?? "#efb39f");
     document.documentElement.classList.toggle(
       "portfolio-theme-light",
       next.dataset.sceneTheme === "light",
     );
-    home.classList.toggle("portfolio-at-end", index === sceneElements.length - 1);
-
-    if (!reducedMotion.matches) {
-      gsap.fromTo(
-        next.querySelectorAll(
-          ".portfolio-count, .portfolio-eyebrow, h1, .portfolio-description, .portfolio-action, .portfolio-socials",
-        ),
-        { y: 22, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.72, stagger: 0.055, ease: "power3.out" },
-      );
-    }
+    home.classList.remove("portfolio-at-end");
+    history.replaceState(null, "", `#${next.id}`);
 
     window.dispatchEvent(
-      new CustomEvent("portfolio-scene-change", { detail: { index } }),
+      new CustomEvent("portfolio-scene-change", {
+        detail: { index, reelIndex, immediate },
+      }),
     );
   }
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      const index = Number((visible.target as HTMLElement).dataset.sceneIndex);
-      if (Number.isFinite(index) && index !== activeIndex) activateScene(index);
+  function goToScene(index: number, immediate = false) {
+    const sceneCount = sceneElements.length;
+    const nextIndex = ((index % sceneCount) + sceneCount) % sceneCount;
+    if (nextIndex === activeIndex && !immediate) return;
+
+    if (immediate) {
+      reelIndex = nextIndex;
+    } else if (index === activeIndex + 1) {
+      reelIndex += 1;
+    } else if (index === activeIndex - 1) {
+      reelIndex -= 1;
+    } else {
+      const cycle = Math.round((reelIndex - nextIndex) / sceneCount);
+      reelIndex = nextIndex + cycle * sceneCount;
+    }
+
+    window.clearTimeout(transitionTimer);
+    transitionLocked = !immediate;
+    activateScene(nextIndex, immediate || reducedMotion.matches);
+    if (!immediate) {
+      transitionTimer = window.setTimeout(() => {
+        transitionLocked = false;
+      }, 900);
+    }
+  }
+
+  function handleWheel(event: WheelEvent) {
+    if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    if (transitionLocked || Math.abs(event.deltaY) < 4) return;
+    goToScene(activeIndex + (event.deltaY > 0 ? 1 : -1));
+  }
+
+  window.addEventListener("wheel", handleWheel, { passive: false });
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+
+      const backward = event.key === "ArrowUp" || event.key === "PageUp" ||
+        (event.key === " " && event.shiftKey);
+      const forward = event.key === "ArrowDown" || event.key === "PageDown" ||
+        (event.key === " " && !event.shiftKey);
+      if (!backward && !forward && event.key !== "Home" && event.key !== "End") return;
+
+      event.preventDefault();
+      if (event.key === "Home") goToScene(0);
+      else if (event.key === "End") goToScene(sceneElements.length - 1);
+      else if (!transitionLocked) goToScene(activeIndex + (backward ? -1 : 1));
     },
-    { threshold: [0.42, 0.58, 0.72] },
   );
-  sceneElements.forEach((scene) => observer.observe(scene));
-
-  async function startWebGL() {
-    if (!home || !canvas || reducedMotion.matches || !desktopCanvas.matches) return;
-
-    const THREE = await import("three");
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const webglScene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 20);
-    camera.position.z = 5;
-    const geometry = new THREE.PlaneGeometry(1, 1, 32, 24);
-    const loader = new THREE.TextureLoader();
-    const texturePaths = sceneElements.map((scene) => scene.dataset.sceneImage ?? "");
-    const textures = await Promise.all(
-      texturePaths.map((path) => loader.loadAsync(path)),
-    );
-    textures.forEach((texture) => {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.minFilter = THREE.LinearFilter;
-    });
-
-    const vertexShader = `
-      uniform float uTime;
-      uniform vec2 uPointer;
-      varying vec2 vUv;
-
-      void main() {
-        vUv = uv;
-        vec3 transformed = position;
-        float arch = sin(uv.y * 3.14159265) * 0.075;
-        float drift = sin((uv.x * 2.2 + uTime * 0.12) * 3.14159265) * 0.012;
-        transformed.z += arch + drift;
-        transformed.x += (uv.y - 0.5) * uPointer.x * 0.075;
-        transformed.y += (uv.x - 0.5) * uPointer.y * 0.045;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
-      }
-    `;
-    const fragmentShader = `
-      uniform sampler2D uTexture;
-      uniform float uOpacity;
-      uniform float uBrightness;
-      varying vec2 vUv;
-
-      void main() {
-        vec4 color = texture2D(uTexture, vUv);
-        float edge = smoothstep(0.0, 0.035, vUv.x)
-          * smoothstep(1.0, 0.965, vUv.x)
-          * smoothstep(0.0, 0.035, vUv.y)
-          * smoothstep(1.0, 0.965, vUv.y);
-        float vignette = 0.9 + 0.1 * (1.0 - distance(vUv, vec2(0.5)));
-        gl_FragColor = vec4(
-          color.rgb * vignette * uBrightness,
-          color.a * uOpacity * edge
-        );
-        #include <colorspace_fragment>
-      }
-    `;
-
-    const groups = textures.map((texture, index) => {
-      const brightness = Number(
-        sceneElements[index]?.dataset.sceneBrightness ?? "1",
-      );
-      const group = new THREE.Group();
-      const shadow = new THREE.Mesh(
-        geometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x050505,
-          transparent: true,
-          opacity: index === 0 ? 0.22 : 0,
-          depthWrite: false,
-        }),
-      );
-      shadow.position.set(0.08, -0.09, -0.12);
-      shadow.scale.set(1.025, 1.025, 1);
-
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          uTexture: { value: texture },
-          uOpacity: { value: index === 0 ? 1 : 0 },
-          uBrightness: { value: brightness },
-          uTime: { value: 0 },
-          uPointer: { value: new THREE.Vector2() },
-        },
-        vertexShader,
-        fragmentShader,
-        transparent: true,
-        depthWrite: false,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      group.add(shadow, mesh);
-      group.userData = { mesh, shadow, material, texture };
-      group.rotation.z = index % 2 === 0 ? -0.035 : 0.035;
-      webglScene.add(group);
-      return group;
-    });
-
-    const pointer = new THREE.Vector2();
-    const smoothedPointer = new THREE.Vector2();
-
-    function resize() {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      renderer.setSize(width, height, false);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      const visibleHeight =
-        2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
-      const visibleWidth = visibleHeight * camera.aspect;
-      groups.forEach((group) => {
-        const texture = group.userData.texture as Texture;
-        const image = texture.image as { width: number; height: number };
-        const imageAspect = image.width / image.height;
-        const maxWidth = visibleWidth * 0.47;
-        const maxHeight = visibleHeight * 0.64;
-        let planeWidth = maxWidth;
-        let planeHeight = planeWidth / imageAspect;
-        if (planeHeight > maxHeight) {
-          planeHeight = maxHeight;
-          planeWidth = planeHeight * imageAspect;
-        }
-        group.scale.set(planeWidth, planeHeight, 1);
-        group.position.set(visibleWidth * 0.235, 0, 0);
-      });
+  window.addEventListener(
+    "touchstart",
+    (event) => {
+      touchStartY = event.touches[0]?.clientY ?? 0;
+      touchCurrentY = touchStartY;
+    },
+    { passive: true },
+  );
+  window.addEventListener(
+    "touchmove",
+    (event) => {
+      if (event.touches.length > 1) return;
+      event.preventDefault();
+      touchCurrentY = event.touches[0]?.clientY ?? touchCurrentY;
+    },
+    { passive: false },
+  );
+  window.addEventListener("touchend", () => {
+    const distance = touchStartY - touchCurrentY;
+    if (Math.abs(distance) >= 32 && !transitionLocked) {
+      goToScene(activeIndex + (distance > 0 ? 1 : -1));
     }
-
-    function transitionTo(index: number) {
-      groups.forEach((group, groupIndex) => {
-        const material = group.userData.material as ShaderMaterial;
-        const shadow = group.userData.shadow as Mesh<PlaneGeometry, MeshBasicMaterial>;
-        const isCurrent = groupIndex === index;
-        gsap.to(material.uniforms.uOpacity, {
-          value: isCurrent ? 1 : 0,
-          duration: 0.7,
-          ease: "power2.inOut",
-        });
-        gsap.to(shadow.material, {
-          opacity: isCurrent ? 0.22 : 0,
-          duration: 0.7,
-          ease: "power2.inOut",
-        });
-        if (isCurrent) {
-          gsap.fromTo(
-            group.rotation,
-            { y: -0.12, z: groupIndex % 2 === 0 ? -0.075 : 0.075 },
-            {
-              y: 0,
-              z: groupIndex % 2 === 0 ? -0.035 : 0.035,
-              duration: 0.9,
-              ease: "power3.out",
-            },
-          );
-          gsap.fromTo(
-            group.position,
-            { y: -0.22 },
-            { y: 0, duration: 0.9, ease: "power3.out" },
-          );
-        }
-      });
-    }
-
-    window.addEventListener(
-      "pointermove",
-      (event) => {
-        pointer.set(
-          (event.clientX / window.innerWidth) * 2 - 1,
-          -(event.clientY / window.innerHeight) * 2 + 1,
-        );
-      },
-      { passive: true },
-    );
-    window.addEventListener("resize", resize, { passive: true });
-    window.addEventListener("portfolio-scene-change", (event) => {
-      const index = (event as CustomEvent<{ index: number }>).detail.index;
-      transitionTo(index);
-    });
-
-    const timer = new THREE.Timer();
-    timer.connect(document);
-    function render(timestamp: number) {
-      timer.update(timestamp);
-      const elapsed = timer.getElapsed();
-      smoothedPointer.lerp(pointer, 0.055);
-      groups.forEach((group) => {
-        const material = group.userData.material as ShaderMaterial;
-        material.uniforms.uTime.value = elapsed;
-        material.uniforms.uPointer.value.copy(smoothedPointer);
-      });
-      renderer.render(webglScene, camera);
-      window.requestAnimationFrame(render);
-    }
-
-    resize();
-    transitionTo(activeIndex);
-    home.classList.add("webgl-ready");
-    window.requestAnimationFrame(render);
-  }
-
-  startWebGL().catch((error) => {
-    console.error("Portfolio WebGL failed to start", error);
-    home?.classList.remove("webgl-ready");
   });
+  progressLinks.forEach((link, index) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      goToScene(index);
+    });
+  });
+
+  sceneElements.forEach((scene, index) => {
+    const copy = scene.querySelector<HTMLElement>(".portfolio-copy");
+    if (copy) gsap.set(copy, { opacity: index === activeIndex ? 1 : 0, y: 0 });
+  });
+  goToScene(activeIndex, true);
+
+  void import("../scripts/portfolio-reel")
+    .then(({ startPortfolioReel }) => startPortfolioReel())
+    .catch((error) => {
+      console.error("Portfolio WebGL failed to start", error);
+      home?.classList.remove("webgl-ready");
+    });
 </script>
