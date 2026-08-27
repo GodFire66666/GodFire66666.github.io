@@ -501,12 +501,12 @@ export async function startPortfolioReel() {
     wheelIdleTimer = window.setTimeout(settleWheelGesture, WHEEL_IDLE_MS);
   }
 
-  function isActiveCardHit(clientX: number, clientY: number) {
+  function cardHitAt(clientX: number, clientY: number) {
     if (
       isMobile() ||
       Math.abs(renderedProgress - committedVirtualIndex) > 0.08
     )
-      return false;
+      return null;
 
     pointerNdc.set(
       (clientX / window.innerWidth) * 2 - 1,
@@ -514,10 +514,20 @@ export async function startPortfolioReel() {
     );
     webglScene.updateMatrixWorld(true);
     raycaster.setFromCamera(pointerNdc, camera);
-    return (
-      raycaster.intersectObject(groups[modulo(committedVirtualIndex)], true)
-        .length > 0
-    );
+    const hits = groups
+      .map((group, groupIndex) => ({
+        distance: Math.abs(
+          virtualIndexFor(groupIndex, renderedProgress) - renderedProgress,
+        ),
+        group,
+        groupIndex,
+      }))
+      .filter(
+        ({ group }) =>
+          group.visible && raycaster.intersectObject(group, true).length > 0,
+      )
+      .sort((a, b) => a.distance - b.distance);
+    return hits[0] ?? null;
   }
 
   function isInteractiveTarget(target: EventTarget | null) {
@@ -547,7 +557,7 @@ export async function startPortfolioReel() {
       home.classList.toggle(
         "reel-card-hovered",
         !isInteractiveTarget(event.target) &&
-          isActiveCardHit(event.clientX, event.clientY),
+          Boolean(cardHitAt(event.clientX, event.clientY)),
       );
     },
     { passive: true },
@@ -556,12 +566,11 @@ export async function startPortfolioReel() {
     home.classList.remove("reel-card-hovered");
   });
   window.addEventListener("click", (event) => {
-    if (
-      isInteractiveTarget(event.target) ||
-      !isActiveCardHit(event.clientX, event.clientY)
-    )
-      return;
-    openActiveCard();
+    if (isInteractiveTarget(event.target)) return;
+    const hit = cardHitAt(event.clientX, event.clientY);
+    if (!hit) return;
+    if (hit.distance < 0.5) openActiveCard();
+    else goToIndex(hit.groupIndex);
   });
   window.addEventListener("resize", resize, { passive: true });
   window.addEventListener("portfolio-reel-go-to", (event) => {
