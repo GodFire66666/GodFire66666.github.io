@@ -118,7 +118,8 @@ const fragmentShader = `
     vec2 lightDistance = pointer - screenUv;
     lightDistance.x *= uResolution.x / uResolution.y;
     float lightValue = sin(min(length(lightDistance) / 0.7, 1.0) * HALF_PI);
-    color.rgb += (1.0 - lightValue) * 0.08 * color.a;
+    float pointerLight = (1.0 - lightValue) * 0.08;
+    color.rgb *= 1.0 + pointerLight;
     color.a *= uOpacity;
 
     gl_FragColor = color;
