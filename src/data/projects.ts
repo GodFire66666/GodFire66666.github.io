@@ -15,7 +15,7 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    title: "Yucong's Tarot",
+    title: "Quiet Tarot",
     titleZh: "Yucong 的塔罗牌",
     description:
       "An interactive tarot reading experience designed for quiet reflection.",
@@ -27,7 +27,7 @@ export const projects: Project[] = [
     href: "https://yucongs-tarot.netlify.app/",
     image: "/projects/yucongs-tarot.jpg",
     imageAlt:
-      "The dark purple and gold interface of Yucong's Tarot, showing single-card and three-card reading options",
+      "The dark purple and gold interface of Quiet Tarot, showing single-card and three-card reading options",
     tags: ["Personal project", "Web experience", "Product design"],
     tagsZh: ["个人项目", "网页体验", "产品设计"],
     featured: true,
