@@ -139,6 +139,9 @@ export async function startPortfolioReel() {
   const sceneElements = Array.from(
     document.querySelectorAll<HTMLElement>("[data-scene-index]"),
   );
+  const progressNav = document.querySelector<HTMLElement>(
+    ".portfolio-progress",
+  );
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   if (!home || !canvas || sceneElements.length === 0 || reducedMotion.matches)
@@ -248,6 +251,8 @@ export async function startPortfolioReel() {
   let previousFrameTime = performance.now();
   let mobileTransitionFrom = initialIndex;
   let mobileTransitionStartedAt = 0;
+  let navigationPreview = false;
+  let navigationPreviewMix = 0;
 
   function isMobile() {
     return window.innerWidth <= MOBILE_BREAKPOINT;
@@ -378,6 +383,27 @@ export async function startPortfolioReel() {
     else applyDesktopGroups(progress);
   }
 
+  function applyReelStageLayout(previewMix: number) {
+    if (isMobile()) {
+      reelStage.position.set(0, 0, 0);
+      reelStage.rotation.set(0, 0, 0);
+      reelStage.scale.setScalar(1);
+      return;
+    }
+
+    reelStage.position.set(
+      visibleWidth * 0.17 * (1 - previewMix),
+      -visibleHeight * 0.01 * (1 - previewMix),
+      0.3,
+    );
+    reelStage.rotation.set(
+      -0.18 - 0.14 * previewMix,
+      -0.25 + 0.21 * previewMix,
+      -0.06 + 0.04 * previewMix,
+    );
+    reelStage.scale.setScalar(1 + 0.08 * previewMix);
+  }
+
   function resize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -408,18 +434,10 @@ export async function startPortfolioReel() {
     visibleWidth = visibleHeight * camera.aspect;
     groups.forEach(sizeGroup);
 
-    if (mobile) {
-      reelStage.position.set(0, 0, 0);
-      reelStage.rotation.set(0, 0, 0);
-    } else {
+    if (!mobile) {
       desktopStep = groups[0].userData.baseHeight * 1.02;
-      reelStage.position.set(
-        visibleWidth * 0.17,
-        -visibleHeight * 0.01,
-        0.3,
-      );
-      reelStage.rotation.set(-0.18, -0.25, -0.06);
     }
+    applyReelStageLayout(navigationPreviewMix);
 
     groups.forEach((group) => {
       const resolution = group.userData.material.uniforms.uResolution
@@ -558,6 +576,27 @@ export async function startPortfolioReel() {
     window.location.assign(href);
   }
 
+  function setNavigationPreview(active: boolean) {
+    if (isMobile()) return;
+    navigationPreview = active;
+    home?.classList.toggle("portfolio-navigation-preview", active);
+  }
+
+  progressNav?.addEventListener("pointerenter", () => {
+    setNavigationPreview(true);
+  });
+  progressNav?.addEventListener("pointerleave", () => {
+    setNavigationPreview(false);
+  });
+  progressNav?.addEventListener("focusin", () => {
+    setNavigationPreview(true);
+  });
+  progressNav?.addEventListener("focusout", () => {
+    window.setTimeout(() => {
+      setNavigationPreview(progressNav.contains(document.activeElement));
+    });
+  });
+
   window.addEventListener("wheel", handleWheel, { passive: false });
   window.addEventListener(
     "pointermove",
@@ -648,6 +687,13 @@ export async function startPortfolioReel() {
     }
 
     smoothedPointer.lerp(pointer, 0.055);
+    const previewTarget = navigationPreview ? 1 : 0;
+    navigationPreviewMix +=
+      (previewTarget - navigationPreviewMix) *
+      (1 - Math.exp(-deltaTime * 6.5));
+    if (Math.abs(previewTarget - navigationPreviewMix) < 0.0005)
+      navigationPreviewMix = previewTarget;
+    applyReelStageLayout(navigationPreviewMix);
     applyGroups(renderedProgress);
     groups.forEach((group) => {
       group.userData.material.uniforms.uTime.value = elapsed;

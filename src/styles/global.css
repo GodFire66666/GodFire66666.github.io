@@ -72,6 +72,7 @@ a:hover {
   width: min(100% - 3rem, 72rem);
   transform: translateX(-50%);
   border-bottom-color: rgba(255, 255, 255, 0.3);
+  transition: opacity 280ms ease;
 }
 
 .site-header--overlay .site-title {
@@ -980,6 +981,10 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
   transition: background-color 650ms cubic-bezier(0.39, 0.575, 0.565, 1);
 }
 
+.portfolio-home.portfolio-navigation-preview .portfolio-backdrop {
+  background: #111214;
+}
+
 .portfolio-canvas {
   z-index: -1;
   opacity: 0;
@@ -1034,11 +1039,25 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
   max-width: 38rem;
   opacity: 0;
   pointer-events: none;
+  transition:
+    opacity 280ms ease,
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .portfolio-scene.active .portfolio-copy {
   opacity: 1;
   pointer-events: auto;
+}
+
+.portfolio-home.portfolio-navigation-preview .portfolio-copy {
+  opacity: 0 !important;
+  pointer-events: none;
+  transform: translateY(-14px) !important;
+}
+
+html:has(.portfolio-home.portfolio-navigation-preview) .site-header--overlay {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .portfolio-count,
@@ -1280,6 +1299,27 @@ html.lang-zh #tarot .portfolio-copy h1 {
   opacity: 1;
 }
 
+.portfolio-home.portfolio-navigation-preview .portfolio-progress-label {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.portfolio-home.portfolio-navigation-preview
+  .portfolio-progress
+  a.active
+  .portfolio-progress-label {
+  color: #fff;
+}
+
+.portfolio-home.portfolio-navigation-preview .portfolio-progress a::before {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.portfolio-home.portfolio-navigation-preview
+  .portfolio-progress
+  a.active::before {
+  background: var(--portfolio-accent);
+}
+
 .portfolio-progress a.active {
   transform: none;
 }
@@ -1311,6 +1351,10 @@ html.lang-zh #tarot .portfolio-copy h1 {
 }
 
 .portfolio-at-end .portfolio-scroll-hint {
+  opacity: 0;
+}
+
+.portfolio-home.portfolio-navigation-preview .portfolio-scroll-hint {
   opacity: 0;
 }
 
