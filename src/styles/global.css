@@ -981,8 +981,18 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
   transition: background-color 650ms cubic-bezier(0.39, 0.575, 0.565, 1);
 }
 
-.portfolio-home.portfolio-navigation-preview .portfolio-backdrop {
+.portfolio-backdrop::after {
+  position: absolute;
+  inset: 0;
   background: #111214;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.portfolio-home.portfolio-navigation-preview .portfolio-backdrop::after {
+  transform: scaleX(1);
 }
 
 .portfolio-canvas {
