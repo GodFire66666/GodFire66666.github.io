@@ -16,7 +16,7 @@ export interface Project {
 export const projects: Project[] = [
   {
     title: "Quiet Tarot",
-    titleZh: "Yucong 的塔罗牌",
+    titleZh: "静谧塔罗",
     description:
       "An interactive tarot reading experience designed for quiet reflection.",
     descriptionZh: "一个为安静思考而设计的交互式塔罗牌体验。",
