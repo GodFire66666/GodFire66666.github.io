@@ -41,6 +41,7 @@ type SceneChangeDetail = {
 
 const MOBILE_BREAKPOINT = 760;
 const FRAME_ASPECT = 1366 / 844;
+const DESKTOP_FRAME_ASPECT = FRAME_ASPECT / 1.06;
 const WHEEL_FRICTION = 0.0023;
 const WHEEL_IDLE_MS = 150;
 const SPRING_MASS = 2.5;
@@ -278,11 +279,11 @@ export async function startPortfolioReel() {
       group.userData.baseHeight = planeWidth / (4 / 3);
     } else {
       planeWidth = visibleWidth * 0.42;
-      group.userData.baseHeight = planeWidth / FRAME_ASPECT;
+      group.userData.baseHeight = planeWidth / DESKTOP_FRAME_ASPECT;
     }
     group.userData.baseWidth = planeWidth;
 
-    const cropAspect = mobile ? 4 / 3 : FRAME_ASPECT;
+    const cropAspect = mobile ? 4 / 3 : DESKTOP_FRAME_ASPECT;
     const uvScale = group.userData.material.uniforms.uUvScale.value as Vector2;
     const uvOffset = group.userData.material.uniforms.uUvOffset
       .value as Vector2;
@@ -393,7 +394,7 @@ export async function startPortfolioReel() {
       reelStage.position.set(0, 0, 0);
       reelStage.rotation.set(0, 0, 0);
     } else {
-      desktopStep = groups[0].userData.baseHeight * 1.02;
+      desktopStep = groups[0].userData.baseHeight * 1.08;
       reelStage.position.set(
         visibleWidth * 0.17,
         -visibleHeight * 0.01,

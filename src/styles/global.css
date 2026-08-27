@@ -1146,7 +1146,7 @@ html.lang-zh #tarot .portfolio-copy h1 {
   position: relative;
   z-index: 1;
   width: min(100%, 31rem);
-  aspect-ratio: 1366 / 844;
+  aspect-ratio: 1.527 / 1;
   margin: 0;
   justify-self: end;
   filter: drop-shadow(0 1.4rem 1.7rem rgba(0, 0, 0, 0.2));
