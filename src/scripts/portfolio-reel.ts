@@ -1,6 +1,7 @@
 import {
   Group,
   LinearFilter,
+  LinearMipmapLinearFilter,
   Mesh,
   PerspectiveCamera,
   PlaneGeometry,
@@ -173,7 +174,12 @@ export async function startPortfolioReel() {
   );
   textures.forEach((texture) => {
     texture.colorSpace = SRGBColorSpace;
-    texture.minFilter = LinearFilter;
+    texture.minFilter = LinearMipmapLinearFilter;
+    texture.magFilter = LinearFilter;
+    texture.anisotropy = Math.min(
+      renderer.capabilities.getMaxAnisotropy(),
+      8,
+    );
   });
 
   const groups = textures.map((texture, index) => {
@@ -377,7 +383,11 @@ export async function startPortfolioReel() {
     const height = window.innerHeight;
     const mobile = isMobile();
 
-    renderer.setPixelRatio(mobile ? Math.min(window.devicePixelRatio, 1.2) : 1);
+    renderer.setPixelRatio(
+      mobile
+        ? Math.min(window.devicePixelRatio, 1.2)
+        : Math.min(window.devicePixelRatio, 1.5),
+    );
     renderer.setSize(width, height, false);
     renderer.setScissorTest(mobile);
     if (mobile) {
