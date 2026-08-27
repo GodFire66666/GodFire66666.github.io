@@ -316,13 +316,13 @@ export async function startPortfolioReel() {
       const offset = virtualIndex - progress;
       const distance = Math.abs(offset);
       const normalizedDistance = Math.min(distance, 1);
-      const frameScale = 1 - normalizedDistance * 0.1;
+      const frameScale = 1;
       const frameWidth = group.userData.baseWidth * frameScale;
       const frameHeight = group.userData.baseHeight * frameScale;
       const centerCorrection = -0.06 * offset * group.userData.baseHeight;
 
       group.position.set(0, -offset * desktopStep + centerCorrection, 0);
-      group.rotation.set(0, 0, 0.015);
+      group.rotation.set(0, 0, -0.015);
       group.scale.set(frameWidth, frameHeight, 1);
       group.visible = visibleGroups.has(groupIndex);
       group.userData.material.uniforms.uDistance.value = distance;
@@ -393,9 +393,13 @@ export async function startPortfolioReel() {
       reelStage.position.set(0, 0, 0);
       reelStage.rotation.set(0, 0, 0);
     } else {
-      desktopStep = groups[0].userData.baseHeight * 1.15;
-      reelStage.position.set(visibleWidth * 0.18, 0, 0.3);
-      reelStage.rotation.set(-0.34, 0.12, -0.08);
+      desktopStep = groups[0].userData.baseHeight * 1.02;
+      reelStage.position.set(
+        visibleWidth * 0.17,
+        -visibleHeight * 0.01,
+        0.3,
+      );
+      reelStage.rotation.set(-0.18, -0.25, -0.06);
     }
 
     groups.forEach((group) => {
