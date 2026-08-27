@@ -916,6 +916,7 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
 }
 
 .portfolio-scene-inner {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.9fr);
   gap: 4rem;
@@ -972,6 +973,11 @@ html.portfolio-theme-light .site-header--overlay .language-option.active {
 
 html.lang-zh .portfolio-copy h1 {
   line-height: 1.05;
+}
+
+html.lang-zh #tarot .portfolio-copy h1 {
+  max-width: 8ch;
+  font-size: 5.15rem;
 }
 
 .portfolio-description {
@@ -1062,6 +1068,10 @@ html.lang-zh .portfolio-copy h1 {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 3px;
   object-fit: contain;
+}
+
+#tarot .portfolio-fallback img {
+  filter: brightness(1.14) saturate(1.06);
 }
 
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
@@ -1167,6 +1177,11 @@ html.portfolio-home-active .page-shell--immersive footer {
     padding: 7.8rem 0 3.6rem;
   }
 
+  #yucong .portfolio-scene-inner {
+    align-content: start;
+    overflow: hidden;
+  }
+
   .portfolio-copy {
     max-width: 30rem;
   }
@@ -1201,8 +1216,23 @@ html.portfolio-home-active .page-shell--immersive footer {
     transform: perspective(50rem) rotateY(-4deg) rotateZ(1.5deg);
   }
 
+  #yucong .portfolio-fallback {
+    width: min(76vw, 20rem);
+    margin-top: 0.3rem;
+    margin-right: -1rem;
+  }
+
   .portfolio-fallback img {
     max-height: 39svh;
+  }
+
+  #yucong .portfolio-fallback img {
+    max-height: 39svh;
+  }
+
+  html.lang-zh #tarot .portfolio-copy h1 {
+    max-width: none;
+    font-size: 3.25rem;
   }
 
   .portfolio-progress {

@@ -24,6 +24,7 @@ const scenes = [
     background: "#202728",
     foreground: "#f6f3ed",
     accent: "#efb39f",
+    brightness: 1,
     theme: "dark",
   },
   {
@@ -47,6 +48,7 @@ const scenes = [
     background: "#171426",
     foreground: "#faf6eb",
     accent: "#d9bd78",
+    brightness: 1.14,
     theme: "dark",
     external: true,
   },
@@ -70,6 +72,7 @@ const scenes = [
     background: "#e9f1e9",
     foreground: "#17322d",
     accent: "#347864",
+    brightness: 1,
     theme: "light",
   },
   {
@@ -91,6 +94,7 @@ const scenes = [
     background: "#f4ecee",
     foreground: "#442b35",
     accent: "#a44867",
+    brightness: 1,
     theme: "light",
   },
 ];
@@ -128,6 +132,7 @@ const scenes = [
           data-scene-background={scene.background}
           data-scene-foreground={scene.foreground}
           data-scene-accent={scene.accent}
+          data-scene-brightness={scene.brightness}
           data-scene-theme={scene.theme}
           aria-labelledby={`${scene.id}-title`}
         >
@@ -310,6 +315,7 @@ const scenes = [
     const fragmentShader = `
       uniform sampler2D uTexture;
       uniform float uOpacity;
+      uniform float uBrightness;
       varying vec2 vUv;
 
       void main() {
@@ -319,11 +325,18 @@ const scenes = [
           * smoothstep(0.0, 0.035, vUv.y)
           * smoothstep(1.0, 0.965, vUv.y);
         float vignette = 0.9 + 0.1 * (1.0 - distance(vUv, vec2(0.5)));
-        gl_FragColor = vec4(color.rgb * vignette, color.a * uOpacity * edge);
+        gl_FragColor = vec4(
+          color.rgb * vignette * uBrightness,
+          color.a * uOpacity * edge
+        );
+        #include <colorspace_fragment>
       }
     `;
 
     const groups = textures.map((texture, index) => {
+      const brightness = Number(
+        sceneElements[index]?.dataset.sceneBrightness ?? "1",
+      );
       const group = new THREE.Group();
       const shadow = new THREE.Mesh(
         geometry,
@@ -341,6 +354,7 @@ const scenes = [
         uniforms: {
           uTexture: { value: texture },
           uOpacity: { value: index === 0 ? 1 : 0 },
+          uBrightness: { value: brightness },
           uTime: { value: 0 },
           uPointer: { value: new THREE.Vector2() },
         },
@@ -459,7 +473,8 @@ const scenes = [
     window.requestAnimationFrame(render);
   }
 
-  startWebGL().catch(() => {
+  startWebGL().catch((error) => {
+    console.error("Portfolio WebGL failed to start", error);
     home?.classList.remove("webgl-ready");
   });
 </script>
