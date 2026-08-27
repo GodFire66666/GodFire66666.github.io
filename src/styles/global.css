@@ -1081,7 +1081,7 @@ html.lang-zh #tarot .portfolio-copy h1 {
 }
 
 .portfolio-description {
-  max-width: 31rem;
+  max-width: 27.5rem;
   margin: 1.5rem 0 0;
   color: var(--scene-fg);
   font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
