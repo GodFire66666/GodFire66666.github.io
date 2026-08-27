@@ -322,7 +322,7 @@ export async function startPortfolioReel() {
       const centerCorrection = -0.06 * offset * group.userData.baseHeight;
 
       group.position.set(0, -offset * desktopStep + centerCorrection, 0);
-      group.rotation.set(0, 0, 0);
+      group.rotation.set(0, 0, 0.145);
       group.scale.set(frameWidth, frameHeight, 1);
       group.visible = visibleGroups.has(groupIndex);
       group.userData.material.uniforms.uDistance.value = distance;
@@ -395,7 +395,7 @@ export async function startPortfolioReel() {
     } else {
       desktopStep = groups[0].userData.baseHeight * 1.15;
       reelStage.position.set(visibleWidth * 0.18, 0, 0.3);
-      reelStage.rotation.set(-0.34, 0.12, 0.065);
+      reelStage.rotation.set(-0.34, 0.12, -0.08);
     }
 
     groups.forEach((group) => {
