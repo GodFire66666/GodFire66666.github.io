@@ -317,7 +317,7 @@ export async function startPortfolioReel() {
       const offset = virtualIndex - progress;
       const distance = Math.abs(offset);
       const normalizedDistance = Math.min(distance, 1);
-      const frameScale = 1;
+      const frameScale = 1 - normalizedDistance * 0.18;
       const frameWidth = group.userData.baseWidth * frameScale;
       const frameHeight = group.userData.baseHeight * frameScale;
       const centerCorrection = -0.06 * offset * group.userData.baseHeight;
@@ -394,7 +394,7 @@ export async function startPortfolioReel() {
       reelStage.position.set(0, 0, 0);
       reelStage.rotation.set(0, 0, 0);
     } else {
-      desktopStep = groups[0].userData.baseHeight * 1.08;
+      desktopStep = groups[0].userData.baseHeight * 1.02;
       reelStage.position.set(
         visibleWidth * 0.17,
         -visibleHeight * 0.01,
