@@ -2,28 +2,51 @@
 import { SITE } from "../config";
 
 interface Props {
+  detail?: boolean;
   overlay?: boolean;
 }
 
-const { overlay = false } = Astro.props;
+const { detail = false, overlay = false } = Astro.props;
 ---
 
-<header class:list={["site-header", { "site-header--overlay": overlay }]}>
-  <a class="site-title" href="/">{SITE.author}</a>
+<header class:list={["site-header", { "site-header--detail": detail, "site-header--overlay": overlay }]}>
+  <a
+    class:list={["site-title", { "detail-back-home": detail }]}
+    href="/"
+    data-transition-link={detail ? true : undefined}
+    data-transition-color={detail ? "#111214" : undefined}
+  >
+    {detail ? (
+      <>
+        <span aria-hidden="true">←</span>
+        <span class="en-text">Back home</span>
+        <span class="zh-text">返回首页</span>
+      </>
+    ) : SITE.author}
+  </a>
   <nav aria-label="Primary navigation">
-    <a href="/projects/">
-      <span class="en-text">Projects</span><span class="zh-text">项目</span>
-    </a>
-    <a href="/about/">
-      <span class="en-text">About</span><span class="zh-text">关于</span>
-    </a>
-    <a href="/notes/">
-      <span class="en-text">Notes</span><span class="zh-text">随笔</span>
-    </a>
-    <a href="/tags/">
-      <span class="en-text">Tags</span><span class="zh-text">标签</span>
-    </a>
-    <a href={SITE.github}>GitHub</a>
+    {!detail && (
+      <>
+        <a href="/projects/">
+          <span class="en-text">Projects</span><span class="zh-text">项目</span>
+        </a>
+        <a href="/about/">
+          <span class="en-text">About</span><span class="zh-text">关于</span>
+        </a>
+        <a href="/notes/">
+          <span class="en-text">Notes</span><span class="zh-text">随笔</span>
+        </a>
+        <a href="/tags/">
+          <span class="en-text">Tags</span><span class="zh-text">标签</span>
+        </a>
+        <a href={SITE.github}>GitHub</a>
+      </>
+    )}
+    {detail && (
+      <a href="/about/" data-transition-link data-transition-color="#3d4545">
+        <span class="en-text">About</span><span class="zh-text">关于</span>
+      </a>
+    )}
     <button
       class="language-toggle"
       type="button"

@@ -6,6 +6,7 @@ export interface Project {
   details: string;
   detailsZh: string;
   href: string;
+  detailHref?: string;
   image: string;
   imageAlt: string;
   tags: string[];
@@ -25,6 +26,7 @@ export const projects: Project[] = [
     detailsZh:
       "你可以抽取单张牌获得今日指引，也可以用三张牌探索过去、现在与未来。这个项目从概念、视觉设计到开发部署均由我独立完成。",
     href: "https://yucongs-tarot.netlify.app/",
+    detailHref: "/projects/tarot/",
     image: "/projects/yucongs-tarot.jpg",
     imageAlt:
       "The dark purple and gold interface of Quiet Tarot, showing single-card and three-card reading options",

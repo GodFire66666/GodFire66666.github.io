@@ -573,7 +573,15 @@ export async function startPortfolioReel() {
       window.open(href, "_blank", "noopener,noreferrer");
       return;
     }
-    window.location.assign(href);
+    const activeScene = sceneElements[modulo(committedVirtualIndex)];
+    window.dispatchEvent(
+      new CustomEvent("site-transition-navigate", {
+        detail: {
+          href,
+          color: activeScene?.dataset.sceneBackground ?? "#111214",
+        },
+      }),
+    );
   }
 
   function setNavigationPreview(active: boolean) {

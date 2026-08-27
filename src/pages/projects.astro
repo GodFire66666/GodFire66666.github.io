@@ -31,10 +31,12 @@ import { projects } from "../data/projects";
         <article class="project-entry">
           <a
             class="project-image-link"
-            href={project.href}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`Visit ${project.title}`}
+            href={project.detailHref ?? project.href}
+            target={project.detailHref ? undefined : "_blank"}
+            rel={project.detailHref ? undefined : "noreferrer"}
+            data-transition-link={project.detailHref ? true : undefined}
+            data-transition-color={project.detailHref ? "#221e34" : undefined}
+            aria-label={`View ${project.title}`}
           >
             <img
               src={project.image}
@@ -51,8 +53,14 @@ import { projects } from "../data/projects";
               {project.tagsZh.map((tag) => <li>{tag}</li>)}
             </ul>
             <h2>
-              <span class="en-text">{project.title}</span>
-              <span class="zh-text">{project.titleZh}</span>
+              <a
+                href={project.detailHref ?? project.href}
+                data-transition-link={project.detailHref ? true : undefined}
+                data-transition-color={project.detailHref ? "#221e34" : undefined}
+              >
+                <span class="en-text">{project.title}</span>
+                <span class="zh-text">{project.titleZh}</span>
+              </a>
             </h2>
             <p class="project-description">
               <span class="en-text">{project.description}</span>

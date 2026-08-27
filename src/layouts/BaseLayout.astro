@@ -9,6 +9,7 @@ interface Props {
   description?: string;
   descriptionZh?: string;
   immersive?: boolean;
+  detail?: boolean;
   wide?: boolean;
 }
 
@@ -18,6 +19,7 @@ const {
   description = SITE.description,
   descriptionZh = SITE.descriptionZh,
   immersive = false,
+  detail = false,
   wide = false,
 } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
@@ -47,6 +49,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           document.documentElement.classList.replace("lang-en", "lang-zh");
           document.documentElement.lang = "zh-CN";
         }
+        const transitionColor = sessionStorage.getItem("yucong-transition-color");
+        if (sessionStorage.getItem("yucong-page-transition") === "1") {
+          document.documentElement.classList.add("page-transition-arriving");
+          if (transitionColor) {
+            document.documentElement.style.setProperty("--route-color", transitionColor);
+          }
+          sessionStorage.removeItem("yucong-page-transition");
+          sessionStorage.removeItem("yucong-transition-color");
+        }
       } catch {
         // Keep the English default when storage is unavailable.
       }
@@ -58,8 +69,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     data-description-en={description}
     data-description-zh={descriptionZh}
   >
-    <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--wide": wide }]}>
-      <Header overlay={immersive} />
+    <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--detail": detail, "page-shell--wide": wide }]}>
+      <Header overlay={immersive} detail={detail} />
       <main class:list={{ "main--immersive": immersive }}>
         <slot />
       </main>
@@ -69,5 +80,48 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         <span class="zh-text">让笔记随时间生长。</span>
       </footer>
     </div>
+    <div class="page-transition-curtain" aria-hidden="true"></div>
+    <script is:inline>
+      const transitionDelay = 520;
+
+      function navigateWithCurtain(href, color) {
+        if (!href) return;
+        document.documentElement.style.setProperty("--route-color", color || "#111214");
+        document.documentElement.classList.add("page-is-leaving");
+        try {
+          sessionStorage.setItem("yucong-page-transition", "1");
+          sessionStorage.setItem("yucong-transition-color", color || "#111214");
+        } catch {}
+        window.setTimeout(() => window.location.assign(href), transitionDelay);
+      }
+
+      document.addEventListener("click", (event) => {
+        const link = event.target instanceof Element
+          ? event.target.closest("a[data-transition-link]")
+          : null;
+        if (!(link instanceof HTMLAnchorElement)) return;
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey ||
+          link.target === "_blank"
+        ) return;
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        event.preventDefault();
+        navigateWithCurtain(url.href, link.dataset.transitionColor);
+      });
+
+      window.addEventListener("site-transition-navigate", (event) => {
+        navigateWithCurtain(event.detail?.href, event.detail?.color);
+      });
+
+      window.addEventListener("pageshow", () => {
+        document.documentElement.classList.remove("page-is-leaving");
+      });
+    </script>
   </body>
 </html>

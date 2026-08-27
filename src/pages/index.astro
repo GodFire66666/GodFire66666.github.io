@@ -47,7 +47,7 @@ const scenes = [
     descriptionZh:
       featuredProject?.descriptionZh ??
       "一个安静而富有沉浸感的塔罗体验，从概念、设计到部署独立完成。",
-    href: featuredProject?.href ?? "https://yucongs-tarot.netlify.app/",
+    href: "/projects/tarot/",
     action: "Open the experience",
     actionZh: "进入体验",
     image: featuredProject?.image ?? "/projects/yucongs-tarot.jpg",
@@ -64,7 +64,7 @@ const scenes = [
     focusX: 0.5,
     focusY: 0.5,
     theme: "dark",
-    external: true,
+    external: false,
   },
   {
     id: "notes",
@@ -202,6 +202,8 @@ const scenes = [
               <a
                 class="portfolio-action"
                 href={scene.href}
+                data-transition-link={!scene.external ? true : undefined}
+                data-transition-color={!scene.external ? scene.background : undefined}
                 target={scene.external ? "_blank" : undefined}
                 rel={scene.external ? "noreferrer" : undefined}
               >

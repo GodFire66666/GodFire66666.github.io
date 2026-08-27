@@ -1,0 +1,109 @@
+---
+import PartDetailLayout from "../../layouts/PartDetailLayout.astro";
+
+const liveUrl = "https://yucongs-tarot.netlify.app/";
+const meta = [
+  {
+    label: "Role",
+    labelZh: "职责",
+    value: "Concept, design & development",
+    valueZh: "概念、设计与开发",
+  },
+  {
+    label: "Type",
+    labelZh: "类型",
+    value: "Self-initiated project",
+    valueZh: "独立项目",
+  },
+  {
+    label: "Status",
+    labelZh: "状态",
+    value: "Live",
+    valueZh: "已上线",
+  },
+];
+---
+
+<PartDetailLayout
+  part="02"
+  title="Quiet Tarot"
+  titleZh="静谧塔罗"
+  eyebrow="Independent Web Project"
+  eyebrowZh="独立网页项目"
+  statement="A small ritual for slowing down and listening to the question underneath the question."
+  statementZh="用一个小小的仪式慢下来，听见问题背后真正想问的事。"
+  description="Quiet Tarot is an interactive reading experience designed and built independently from concept to deployment. It offers a single-card reading for daily guidance and a three-card spread for past, present, and future."
+  descriptionZh="静谧塔罗是一个从概念、视觉到开发部署均独立完成的交互式占卜体验，提供单张今日指引与过去、现在、未来三张牌阵。"
+  image="/projects/yucongs-tarot.jpg"
+  imageAlt="The dark purple and gold interface of Quiet Tarot"
+  background="#221e34"
+  foreground="#eee9df"
+  accent="#d6b35f"
+  {meta}
+  nextHref="/notes/"
+  nextTitle="Notes"
+  nextTitleZh="随笔"
+  nextImage="/xiaohongshu/6a803b2c0000000026034f93/images/01.webp"
+  nextBackground="#dfeadf"
+  nextAccent="#a96257"
+>
+  <section class="detail-chapter detail-chapter--split" data-detail-reveal>
+    <header>
+      <span>01</span>
+      <p><span class="en-text">The idea</span><span class="zh-text">项目起点</span></p>
+      <h2>
+        <span class="en-text">Turn a reading into a quiet digital ritual</span>
+        <span class="zh-text">把一次抽牌变成安静的数字仪式</span>
+      </h2>
+    </header>
+    <div class="detail-prose">
+      <p class="en-text">
+        The experience avoids the noise of a typical tool. A restrained dark
+        interface, deliberate pacing, and gold details create enough space for
+        the question, the card, and the interpretation to remain the focus.
+      </p>
+      <p class="zh-text">
+        这个体验刻意避开普通工具的嘈杂感。克制的深色界面、缓慢的节奏和少量金色细节，让问题、牌面与解读始终成为注意力中心。
+      </p>
+    </div>
+  </section>
+
+  <figure class="detail-wide-media detail-wide-media--screen" data-detail-reveal>
+    <img src="/projects/yucongs-tarot.jpg" alt="Quiet Tarot reading selection screen" loading="lazy" />
+  </figure>
+
+  <section class="detail-chapter detail-chapter--split" data-detail-reveal>
+    <header>
+      <span>02</span>
+      <p><span class="en-text">The experience</span><span class="zh-text">体验结构</span></p>
+      <h2>
+        <span class="en-text">One card for direction. Three cards for a story.</span>
+        <span class="zh-text">一张牌寻找方向，三张牌展开故事。</span>
+      </h2>
+    </header>
+    <div class="detail-prose">
+      <p class="en-text">
+        The single-card reading gives a concise prompt for the day. The
+        three-card spread creates a simple narrative across the past, present,
+        and future, giving the reader more room to connect the cards to their
+        own situation.
+      </p>
+      <p class="zh-text">
+        单张牌提供简洁的今日指引；三张牌则沿着过去、现在和未来建立一条叙事，让使用者有更多空间把牌意与自己的处境连接起来。
+      </p>
+    </div>
+  </section>
+
+  <section class="detail-chapter detail-chapter--statement" data-detail-reveal>
+    <p><span class="en-text">Try it yourself</span><span class="zh-text">亲自体验</span></p>
+    <h2>
+      <span class="en-text">Ask a question, choose a spread, and let the cards slow the moment down.</span>
+      <span class="zh-text">写下问题，选择牌阵，让这一刻慢下来。</span>
+    </h2>
+    <a class="detail-primary-link" href={liveUrl} target="_blank" rel="noreferrer">
+      <span class="en-text">Open Quiet Tarot</span>
+      <span class="zh-text">进入静谧塔罗</span>
+      <span aria-hidden="true">↗</span>
+    </a>
+  </section>
+</PartDetailLayout>

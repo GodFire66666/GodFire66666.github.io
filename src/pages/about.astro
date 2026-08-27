@@ -1,62 +1,85 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
 import { SITE } from "../config";
+import PartDetailLayout from "../layouts/PartDetailLayout.astro";
+
+const meta = [
+  { label: "Work", labelZh: "工作", value: "LLMs & Agent Training", valueZh: "大语言模型与智能体训练" },
+  { label: "Based in", labelZh: "常驻", value: "Shanghai, China", valueZh: "中国上海" },
+  { label: "Education", labelZh: "教育经历", value: "USTC", valueZh: "中国科学技术大学" },
+];
 ---
 
-<BaseLayout title="About" titleZh="关于">
-  <article class="page prose">
-    <div class="en-text">
-      <h1>About</h1>
-      <p>Hello, I'm {SITE.author}.</p>
-      <p>
-        I work on LLMs and agent training, exploring how models can learn to
-        reason, use tools, and handle complex tasks. I studied Artificial
-        Intelligence and Data Science at the University of Science and
-        Technology of China and am currently working as an algorithm engineer in
-        Shanghai.
-      </p>
-      <p>
-        Outside of work, I spend a lot of time with games, music, films, and
-        anime. I enjoy singing, working out, cycling, taking long walks without a
-        destination, and occasionally attempting my dream of playing and singing
-        with a stringless guitar.
-      </p>
-      <p>
-        I have always liked keeping notes. Writing helps me make sense of
-        technical problems, intense emotions, and the ordinary experiences that
-        would otherwise disappear too quickly.
-      </p>
-      <p>
-        I value sincerity, empathy, independent thinking, and direct
-        communication. I believe life is more about experiencing the journey
-        than collecting conclusions.
-      </p>
-      <p>
-        This site is where I document both sides of my life: what I am building
-        and learning, and what I find worth remembering along the way. You can
-        find my research on <a href={SITE.scholar}>Google Scholar</a>, my projects
-        on <a href={SITE.github}>GitHub</a>, and more of my life on
-        <a href={SITE.xiaohongshu}>Xiaohongshu</a>.
-      </p>
+<PartDetailLayout
+  part="01"
+  title="Yucong Luo"
+  titleZh="罗宇聪"
+  eyebrow="LLMs & Agent Training"
+  eyebrowZh="大语言模型与智能体训练"
+  statement="Work seriously. Experience life fully. Keep what matters in writing."
+  statementZh="认真工作，尽兴生活，也用文字留下真正重要的东西。"
+  description="I am an algorithm engineer working on how models learn to reason, use tools, and act in complex environments. This page holds both the technical and personal sides of who I am."
+  descriptionZh="我是一名算法工程师，关注模型如何学习推理、使用工具，并在复杂环境中采取行动。这里同时保留我的工作、兴趣与生活。"
+  image="/hero-portrait-centered.jpg"
+  imageAlt="Portrait of Yucong Luo in a black sweater"
+  imagePosition="center 58%"
+  background="#3d4545"
+  foreground="#f0ece5"
+  accent="#d8a48b"
+  {meta}
+  nextHref="/projects/tarot/"
+  nextTitle="Quiet Tarot"
+  nextTitleZh="静谧塔罗"
+  nextImage="/projects/yucongs-tarot.jpg"
+  nextBackground="#221e34"
+  nextAccent="#d6b35f"
+>
+  <section class="detail-chapter detail-chapter--split" data-detail-reveal>
+    <header>
+      <span>01</span>
+      <p><span class="en-text">Work & learning</span><span class="zh-text">工作与学习</span></p>
+      <h2><span class="en-text">Learning how intelligent systems learn</span><span class="zh-text">理解智能系统如何学习</span></h2>
+    </header>
+    <div class="detail-prose">
+      <div class="en-text">
+        <p>I work on LLMs and agent training, exploring how models learn to reason, use tools, and complete complex tasks. I studied Artificial Intelligence and Data Science at the University of Science and Technology of China and now work as an algorithm engineer in Shanghai.</p>
+        <p>I care about the experiments, data choices, and small implementation decisions behind a result, not only the result itself.</p>
+      </div>
+      <div class="zh-text">
+        <p>我从事大语言模型与智能体训练相关工作，关注模型如何学习推理、使用工具并完成复杂任务。我毕业于中国科学技术大学人工智能与数据科学专业，目前在上海担任算法工程师。</p>
+        <p>相比只看结果，我也很在意结果背后的实验、数据选择与具体实现。</p>
+      </div>
     </div>
-    <div class="zh-text">
-      <h1>关于</h1>
-      <p>你好，我是 {SITE.author}。</p>
-      <p>
-        我从事大语言模型与智能体训练相关工作，关注模型如何学习推理、使用工具并完成复杂任务。我毕业于中国科学技术大学人工智能与数据科学专业，目前在上海担任算法工程师。
-      </p>
-      <p>
-        工作之外，我会把很多时间留给游戏、音乐、电影和动漫。我喜欢唱歌、健身、骑行和漫无目的地散步，也会偶尔用无弦吉他继续尝试自己的弹唱梦想。
-      </p>
-      <p>
-        我一直喜欢记录。写作帮助我理解技术问题、浓烈的情绪，以及那些稍纵即逝的日常体验。
-      </p>
-      <p>
-        我重视真诚、共情、独立思考和直接沟通。我相信人生更重要的是体验过程，而不是收集结论。
-      </p>
-      <p>
-        这个网站记录着我生活的两面：正在构建和学习的事物，以及一路上值得被记住的东西。你可以在 <a href={SITE.scholar}>谷歌学术</a>查看我的研究，在 <a href={SITE.github}>GitHub</a> 查看我的项目，也可以在<a href={SITE.xiaohongshu}>小红书</a>看到更多生活。
-      </p>
+  </section>
+
+  <figure class="detail-wide-media detail-wide-media--portrait" data-detail-reveal>
+    <img src="/hero-portrait.jpg" alt="Yucong Luo seated in a black sweater" loading="lazy" />
+  </figure>
+
+  <section class="detail-chapter detail-chapter--split" data-detail-reveal>
+    <header>
+      <span>02</span>
+      <p><span class="en-text">Outside work</span><span class="zh-text">工作之外</span></p>
+      <h2><span class="en-text">Games, music, films, and ordinary days</span><span class="zh-text">游戏、音乐、电影和普通日子</span></h2>
+    </header>
+    <div class="detail-prose">
+      <div class="en-text">
+        <p>Games, music, films, and anime take up much of my time outside work. I enjoy singing, working out, cycling, taking long walks without a destination, and occasionally attempting my dream of playing and singing with a stringless guitar.</p>
+        <p>I value sincerity, empathy, independent thinking, and direct communication. I believe life is more about experiencing the journey than collecting conclusions.</p>
+      </div>
+      <div class="zh-text">
+        <p>工作之外，我会把很多时间留给游戏、音乐、电影和动漫。我喜欢唱歌、健身、骑行和漫无目的地散步，也会偶尔用无弦吉他继续尝试自己的弹唱梦想。</p>
+        <p>我重视真诚、共情、独立思考和直接沟通。我相信人生更重要的是体验过程，而不是收集结论。</p>
+      </div>
     </div>
-  </article>
-</BaseLayout>
+  </section>
+
+  <section class="detail-chapter detail-chapter--statement" data-detail-reveal>
+    <p><span class="en-text">Why this site exists</span><span class="zh-text">为什么做这个网站</span></p>
+    <h2><span class="en-text">Writing is how I keep a thought from disappearing too quickly.</span><span class="zh-text">写作，是我不让一个想法消失得太快的方式。</span></h2>
+    <div class="detail-links">
+      <a href={SITE.github}>GitHub ↗</a>
+      <a href={SITE.scholar}>Google Scholar ↗</a>
+      <a href={SITE.xiaohongshu}>Xiaohongshu ↗</a>
+    </div>
+  </section>
+</PartDetailLayout>

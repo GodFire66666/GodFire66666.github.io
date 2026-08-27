@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import BaseLayout from "./BaseLayout.astro";
-import { formatDate, tagPath } from "../utils/posts";
+import PartDetailLayout from "./PartDetailLayout.astro";
+import { formatDate } from "../utils/posts";
 
 interface Props {
   post: CollectionEntry<"posts">;
@@ -11,47 +11,50 @@ interface Props {
 const { post, translation } = Astro.props;
 const { title, description, published, updated, tags } = post.data;
 const { formatDateZh, translateTag } = await import("../utils/i18n");
+const meta = [
+  { label: "Published", labelZh: "发布", value: formatDate(published), valueZh: formatDateZh(published) },
+  { label: "Format", labelZh: "形式", value: "Long-form note", valueZh: "长篇文章" },
+  { label: "Topics", labelZh: "主题", value: tags.join(" · ") || "Notes", valueZh: tags.map(translateTag).join(" · ") || "随笔" },
+];
 ---
 
-<BaseLayout
-  title={title}
-  titleZh={translation.data.title}
-  description={description}
-  descriptionZh={translation.data.description}
+<PartDetailLayout
+  part="04"
+  title="Writing"
+  titleZh="文章"
+  pageTitle={title}
+  pageTitleZh={translation.data.title}
+  eyebrow="Writing"
+  eyebrowZh="文章"
+  statement={description}
+  statementZh={translation.data.description}
+  description="Longer notes on technology, ways of working, and questions that become clearer through writing. Each article begins with one concrete question and leaves room for the answer to evolve."
+  descriptionZh="关于技术、工作方法，以及那些在书写中逐渐清晰的问题的长篇记录。每篇文章从一个具体问题出发，也为答案继续变化留下空间。"
+  image="/projects/writing-cover.webp"
+  imageAlt="Editorial cover for Yucong Luo's long-form writing"
+  background="#eee4e7"
+  foreground="#49343b"
+  accent="#a04f6a"
+  {meta}
+  nextHref="/about/"
+  nextTitle="Yucong Luo"
+  nextTitleZh="罗宇聪"
+  nextImage="/hero-portrait-centered.jpg"
+  nextBackground="#3d4545"
+  nextAccent="#d8a48b"
 >
-  <article class="post">
-    <header class="post-header">
-      <h1>
-        <span class="en-text">{title}</span>
-        <span class="zh-text">{translation.data.title}</span>
-      </h1>
-      <p class="post-date">
-        <time class="en-text" datetime={published.toISOString()}>{formatDate(published)}</time>
-        <time class="zh-text" datetime={published.toISOString()}>{formatDateZh(published)}</time>
-        {updated && (
-          <>
-            <span class="en-text"> · Updated {formatDate(updated)}</span>
-            <span class="zh-text"> · 更新于 {formatDateZh(updated)}</span>
-          </>
-        )}
-      </p>
-      {tags.length > 0 && (
-        <ul class="tag-list" aria-label="Post tags">
-          {tags.map((tag) => (
-            <li>
-              <a href={tagPath(tag)}>
-                #<span class="en-text">{tag}</span><span class="zh-text">{translateTag(tag)}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+  <section class="detail-article" data-detail-reveal>
+    <header class="detail-article-header">
+      <p><span class="en-text">The article</span><span class="zh-text">正文</span></p>
+      {updated && (
+        <p>
+          <span class="en-text">Updated {formatDate(updated)}</span>
+          <span class="zh-text">更新于 {formatDateZh(updated)}</span>
+        </p>
       )}
     </header>
-    <div class="prose">
+    <div class="prose detail-article-prose">
       <slot />
     </div>
-    <a class="back-link" href="/">
-      ← <span class="en-text">All posts</span><span class="zh-text">全部文章</span>
-    </a>
-  </article>
-</BaseLayout>
+  </section>
+</PartDetailLayout>

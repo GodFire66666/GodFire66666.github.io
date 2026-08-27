@@ -1,44 +1,67 @@
 ---
 import NoteCard from "../../components/NoteCard.astro";
 import { xiaohongshuPosts } from "../../data/xiaohongshu";
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import PartDetailLayout from "../../layouts/PartDetailLayout.astro";
+
+const cover = xiaohongshuPosts.find((post) => post.id === "6a803b2c0000000026034f93");
+const coverImage = cover?.images[0] ?? "/xiaohongshu/6a803b2c0000000026034f93/images/01.webp";
+const meta = [
+  { label: "Collection", labelZh: "收录", value: `${xiaohongshuPosts.length} public notes`, valueZh: `${xiaohongshuPosts.length} 篇公开随笔` },
+  { label: "Source", labelZh: "来源", value: "Xiaohongshu", valueZh: "小红书" },
+  { label: "Format", labelZh: "形式", value: "Images & reflections", valueZh: "图像与随想" },
+];
 ---
 
-<BaseLayout
-  wide
+<PartDetailLayout
+  part="03"
   title="Notes"
   titleZh="随笔"
-  description="Personal notes, images, and reflections by Yucong Luo."
-  descriptionZh="Yucong Luo 的生活记录、图片与随笔。"
+  eyebrow={`${xiaohongshuPosts.length} Notes from Elsewhere`}
+  eyebrowZh={`${xiaohongshuPosts.length} 篇站外随笔`}
+  statement="Small fragments can hold the shape of an entire season."
+  statementZh="很小的片段，也能留住一整段时间的形状。"
+  description="Shorter thoughts and visual records about feeling, relationships, music, games, and ordinary days. They were originally shared on Xiaohongshu, and their original Chinese is preserved here."
+  descriptionZh="关于情感、关系、音乐、游戏与普通日子的短篇想法和图像记录。它们最初发布于小红书，并在这里保留中文原文。"
+  image={coverImage}
+  imageAlt={cover?.title ?? "Sunset note titled Lose yourself to find yourself"}
+  imagePosition="center 72%"
+  background="#dfeadf"
+  foreground="#294139"
+  accent="#a96257"
+  {meta}
+  nextHref="/posts/start-writing/"
+  nextTitle="Writing"
+  nextTitleZh="文章"
+  nextImage="/projects/writing-cover.webp"
+  nextBackground="#eee4e7"
+  nextAccent="#a04f6a"
 >
-  <section class="notes-page" aria-labelledby="notes-heading">
+  <section class="detail-chapter detail-chapter--statement" data-detail-reveal>
+    <p><span class="en-text">The collection</span><span class="zh-text">这组记录</span></p>
+    <h2>
+      <span class="en-text">Life does not always arrive as an essay. Sometimes one image and a few honest lines are enough.</span>
+      <span class="zh-text">生活并不总以长文章出现。有时一张图和几句诚实的话就已经足够。</span>
+    </h2>
+  </section>
+
+  <section class="notes-page detail-notes-collection" aria-labelledby="notes-heading" data-detail-reveal>
     <header class="notes-intro">
       <p class="notes-kicker">
         <span class="en-text">Life · Ideas · Images</span>
         <span class="zh-text">生活 · 思考 · 图像</span>
       </p>
-      <h1 id="notes-heading">
+      <h2 id="notes-heading">
         <span class="en-text">Notes from elsewhere</span>
         <span class="zh-text">站外随笔</span>
-      </h1>
+      </h2>
       <p>
-        <span class="en-text">
-          Shorter thoughts and visual records, originally shared on Xiaohongshu.
-          The original Chinese is preserved here.
-        </span>
-        <span class="zh-text">
-          一些更短的想法、生活片段与图像记录，原发布于小红书。
-        </span>
+        <span class="en-text">Browse the complete collection in its original order.</span>
+        <span class="zh-text">按照原始顺序浏览全部记录。</span>
       </p>
-      <div class="notes-count">
-        <span>{xiaohongshuPosts.length}</span>
-        <span class="en-text">public notes</span>
-        <span class="zh-text">篇公开随笔</span>
-      </div>
     </header>
 
     <div class="notes-grid">
       {xiaohongshuPosts.map((post) => <NoteCard post={post} />)}
     </div>
   </section>
-</BaseLayout>
+</PartDetailLayout>
