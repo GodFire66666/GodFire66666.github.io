@@ -3,18 +3,29 @@ import { SITE } from "../config";
 
 interface Props {
   detail?: boolean;
+  detailReturnColor?: string;
   overlay?: boolean;
 }
 
-const { detail = false, overlay = false } = Astro.props;
+const { detail = false, detailReturnColor = "#3d4545", overlay = false } = Astro.props;
+const detailPath = Astro.url.pathname;
+const detailReturnScene = detailPath.startsWith("/projects/tarot/")
+  ? "tarot"
+  : detailPath.startsWith("/notes/")
+    ? "notes"
+    : detailPath.startsWith("/posts/")
+      ? "writing"
+      : "yucong";
+const detailReturnHref = `/#${detailReturnScene}`;
 ---
 
 <header class:list={["site-header", { "site-header--detail": detail, "site-header--overlay": overlay }]}>
   <a
     class:list={["site-title", { "detail-back-home": detail }]}
-    href="/"
+    href={detail ? detailReturnHref : "/"}
     data-transition-link={detail ? true : undefined}
-    data-transition-color={detail ? "#111214" : undefined}
+    data-transition-color={detail ? detailReturnColor : undefined}
+    data-detail-return={detail ? true : undefined}
   >
     {detail ? (
       <>
@@ -22,7 +33,12 @@ const { detail = false, overlay = false } = Astro.props;
         <span class="en-text">Back home</span>
         <span class="zh-text">返回首页</span>
       </>
-    ) : SITE.author}
+    ) : (
+      <>
+        <span class="en-text">{SITE.author}</span>
+        <span class="zh-text">{SITE.authorZh}</span>
+      </>
+    )}
   </a>
   <nav aria-label="Primary navigation">
     {!detail && (
@@ -65,6 +81,29 @@ const { detail = false, overlay = false } = Astro.props;
   const toggle = document.querySelector<HTMLButtonElement>(
     "[data-language-toggle]",
   );
+  const detailReturnLink = document.querySelector<HTMLAnchorElement>(
+    "[data-detail-return]",
+  );
+
+  if (detailReturnLink) {
+    try {
+      const savedReturn = JSON.parse(
+        sessionStorage.getItem("yucong-detail-return") ?? "null",
+      ) as { color?: string; detailPath?: string; returnHref?: string } | null;
+      if (
+        savedReturn?.detailPath === window.location.pathname &&
+        /^\/#(?:yucong|tarot|notes|writing)$/.test(savedReturn.returnHref ?? "")
+      ) {
+        detailReturnLink.href = savedReturn.returnHref ?? detailReturnLink.href;
+        detailReturnLink.dataset.historyReturn = "true";
+        if (savedReturn.color) {
+          detailReturnLink.dataset.transitionColor = savedReturn.color;
+        }
+      }
+    } catch {
+      // The server-rendered scene link remains a complete fallback.
+    }
+  }
 
   function currentLanguage() {
     return root.classList.contains("lang-zh") ? "zh" : "en";

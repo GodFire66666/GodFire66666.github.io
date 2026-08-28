@@ -10,6 +10,9 @@ interface Props {
   descriptionZh?: string;
   immersive?: boolean;
   detail?: boolean;
+  detailBackground?: string;
+  detailForeground?: string;
+  detailAccent?: string;
   wide?: boolean;
 }
 
@@ -20,6 +23,9 @@ const {
   descriptionZh = SITE.descriptionZh,
   immersive = false,
   detail = false,
+  detailBackground,
+  detailForeground,
+  detailAccent,
   wide = false,
 } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
@@ -34,9 +40,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#fbfbf8" />
+    <meta name="theme-color" content={detailBackground ?? "#fbfbf8"} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
+    <link rel="prefetch" href="/about/" />
+    <link rel="prefetch" href="/projects/tarot/" />
+    <link rel="prefetch" href="/notes/" />
+    <link rel="prefetch" href="/posts/start-writing/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -49,14 +59,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           document.documentElement.classList.replace("lang-en", "lang-zh");
           document.documentElement.lang = "zh-CN";
         }
-        const transitionColor = sessionStorage.getItem("yucong-transition-color");
-        if (sessionStorage.getItem("yucong-page-transition") === "1") {
-          document.documentElement.classList.add("page-transition-arriving");
-          if (transitionColor) {
-            document.documentElement.style.setProperty("--route-color", transitionColor);
-          }
-          sessionStorage.removeItem("yucong-page-transition");
-          sessionStorage.removeItem("yucong-transition-color");
+        if (sessionStorage.getItem("yucong-route-transition") === "1") {
+          document.documentElement.classList.add("route-transition-arriving");
+          sessionStorage.removeItem("yucong-route-transition");
         }
       } catch {
         // Keep the English default when storage is unavailable.
@@ -64,35 +69,278 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
   </head>
   <body
+    style={detail ? `--detail-bg:${detailBackground};--detail-fg:${detailForeground};--detail-accent:${detailAccent};` : undefined}
     data-title-en={pageTitle}
     data-title-zh={pageTitleZh}
     data-description-en={description}
     data-description-zh={descriptionZh}
   >
     <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--detail": detail, "page-shell--wide": wide }]}>
-      <Header overlay={immersive} detail={detail} />
+      <Header
+        overlay={immersive}
+        detail={detail}
+        detailReturnColor={detailBackground}
+      />
       <main class:list={{ "main--immersive": immersive }}>
         <slot />
       </main>
       <footer>
-        <span>© {new Date().getFullYear()} {SITE.author}</span>
+        <span>
+          © {new Date().getFullYear()} <span class="en-text">{SITE.author}</span><span class="zh-text">{SITE.authorZh}</span>
+        </span>
         <span class="en-text">Notes that grow over time.</span>
         <span class="zh-text">让笔记随时间生长。</span>
       </footer>
     </div>
-    <div class="page-transition-curtain" aria-hidden="true"></div>
     <script is:inline>
-      const transitionDelay = 520;
+      const prefetchedPages = new Set();
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let routeIsChanging = false;
 
-      function navigateWithCurtain(href, color) {
-        if (!href) return;
-        document.documentElement.style.setProperty("--route-color", color || "#111214");
-        document.documentElement.classList.add("page-is-leaving");
+      function clearDepartingState() {
+        let restoringHome = false;
         try {
-          sessionStorage.setItem("yucong-page-transition", "1");
-          sessionStorage.setItem("yucong-transition-color", color || "#111214");
+          restoringHome = sessionStorage.getItem("yucong-route-restoring") === "1";
+          sessionStorage.removeItem("yucong-route-restoring");
         } catch {}
-        window.setTimeout(() => window.location.assign(href), transitionDelay);
+        if (restoringHome) {
+          document.documentElement.classList.add("route-transition-restoring");
+        }
+        document.documentElement.classList.remove("route-transition-leaving");
+        document.querySelector("[data-portfolio-home]")
+          ?.classList.remove("route-transition-prepared");
+        document.querySelectorAll(".route-transition-source")
+          .forEach((element) => element.classList.remove("route-transition-source"));
+        document.querySelectorAll(".route-transition-origin-hidden")
+          .forEach((element) => element.classList.remove("route-transition-origin-hidden"));
+        document.querySelectorAll(".route-transition-overlay")
+          .forEach((element) => element.remove());
+        document.documentElement.classList.remove("route-transition-returning");
+        document.querySelectorAll(".route-return-underlay")
+          .forEach((element) => element.remove());
+        routeIsChanging = false;
+        if (restoringHome) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.setTimeout(() => {
+                document.documentElement.classList.remove("route-transition-restoring");
+              }, 180);
+            });
+          });
+        }
+      }
+
+      window.addEventListener("pageshow", clearDepartingState);
+
+      function prefetchPage(href) {
+        if (!href || prefetchedPages.has(href)) return;
+        const url = new URL(href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        prefetchedPages.add(url.href);
+        const prefetch = document.createElement("link");
+        prefetch.rel = "prefetch";
+        prefetch.href = url.href;
+        document.head.append(prefetch);
+      }
+
+      function transitionSceneFor(source, sceneId) {
+        if (sceneId) {
+          const scene = document.getElementById(sceneId);
+          if (scene?.matches(".portfolio-scene")) return scene;
+        }
+        const sourceScene = source?.closest?.(".portfolio-scene");
+        return sourceScene ?? document.querySelector(".portfolio-scene.active");
+      }
+
+      function targetCoverRect() {
+        const stageWidth = Math.min(
+          window.innerWidth,
+          window.innerHeight * (16 / 9),
+          1846.154,
+        );
+        const stageHeight = stageWidth * (9 / 16);
+        const stageLeft = (window.innerWidth - stageWidth) / 2;
+        const stageTop = (window.innerHeight - stageHeight) / 2;
+        const width = stageWidth * 0.52;
+        return {
+          top: stageTop + stageHeight * 0.24,
+          left: stageLeft + stageWidth * 0.5 - width / 2,
+          width,
+          height: width * (844 / 1366),
+        };
+      }
+
+      function createRouteOverlay(scene, options) {
+        const sourceCover = scene?.querySelector("[data-route-cover]")
+          ?? document.querySelector("[data-route-cover]");
+        const sourceImage = sourceCover?.querySelector("img");
+        const sourceRect = sourceCover?.getBoundingClientRect();
+        const imageSource = options.image
+          ?? scene?.dataset.sceneImage
+          ?? sourceImage?.currentSrc
+          ?? sourceImage?.src;
+        const background = options.color
+          ?? scene?.dataset.sceneBackground
+          ?? getComputedStyle(document.body).backgroundColor;
+
+        const overlay = document.createElement("div");
+        overlay.className = "route-transition-overlay";
+        overlay.style.setProperty("--route-background", background);
+
+        if (imageSource && sourceRect) {
+          const image = document.createElement("img");
+          const target = targetCoverRect();
+          image.src = imageSource;
+          image.alt = "";
+          image.className = "route-transition-image";
+          image.style.left = `${sourceRect.left}px`;
+          image.style.top = `${sourceRect.top}px`;
+          image.style.width = `${sourceRect.width}px`;
+          image.style.height = `${sourceRect.height}px`;
+          image.style.objectPosition = sourceImage
+            ? getComputedStyle(sourceImage).objectPosition
+            : "center";
+          image.style.setProperty("--route-target-left", `${target.left}px`);
+          image.style.setProperty("--route-target-top", `${target.top}px`);
+          image.style.setProperty("--route-target-width", `${target.width}px`);
+          image.style.setProperty("--route-target-height", `${target.height}px`);
+          overlay.append(image);
+        }
+
+        document.body.append(overlay);
+        overlay.getBoundingClientRect();
+        scene?.classList.remove("route-transition-source");
+        sourceCover?.classList.add("route-transition-origin-hidden");
+        overlay.classList.add("active");
+      }
+
+      function navigateToPage(href, options = {}) {
+        if (!href || routeIsChanging) return;
+        routeIsChanging = true;
+
+        const url = new URL(href, window.location.href);
+        const home = document.querySelector("[data-portfolio-home]");
+        const returnScene = transitionSceneFor(options.source, options.sceneId);
+        if (home && returnScene?.id) {
+          const returnRecord = {
+            detailPath: url.pathname,
+            returnHref: `/#${returnScene.id}`,
+            color: returnScene.dataset.sceneBackground,
+            foreground: returnScene.dataset.sceneForeground,
+            titleColor: returnScene.dataset.sceneTitle,
+            accent: returnScene.dataset.sceneAccent,
+            previewHtml: returnScene.outerHTML,
+            previewHeaderHtml: document.querySelector(".site-header")?.outerHTML,
+            previewProgressHtml: home.querySelector(".portfolio-progress")?.outerHTML,
+            previewCanvas: undefined,
+          };
+          try {
+            const previewCanvas = home
+              .querySelector("[data-portfolio-canvas]")
+              ?.toDataURL("image/webp", 0.72);
+            if (previewCanvas && previewCanvas.length > 8192) {
+              returnRecord.previewCanvas = previewCanvas;
+            }
+          } catch {}
+          try {
+            sessionStorage.setItem("yucong-detail-return", JSON.stringify(returnRecord));
+          } catch {
+            delete returnRecord.previewCanvas;
+            try {
+              sessionStorage.setItem("yucong-detail-return", JSON.stringify(returnRecord));
+            } catch {}
+          }
+        }
+        if (reducedMotion.matches) {
+          window.location.assign(url.href);
+          return;
+        }
+
+        const scene = returnScene;
+        scene?.classList.add("route-transition-source");
+        document.querySelector("[data-portfolio-home]")
+          ?.classList.add("route-transition-prepared");
+        document.documentElement.classList.add("route-transition-leaving");
+
+        try {
+          sessionStorage.setItem("yucong-route-transition", "1");
+        } catch {}
+
+        requestAnimationFrame(() => {
+          createRouteOverlay(scene, options);
+          window.setTimeout(() => window.location.assign(url.href), 780);
+        });
+      }
+
+      function returnWithSlide(link, useHistory) {
+        if (routeIsChanging) return;
+        if (reducedMotion.matches) {
+          try {
+            sessionStorage.setItem("yucong-route-restoring", "1");
+          } catch {}
+          if (useHistory) {
+            try {
+              sessionStorage.removeItem("yucong-detail-return");
+            } catch {}
+            window.history.back();
+          } else {
+            window.location.assign(link.href);
+          }
+          return;
+        }
+
+        routeIsChanging = true;
+        const underlay = document.createElement("div");
+        underlay.className = "route-return-underlay";
+        underlay.style.background = link.dataset.transitionColor
+          ?? getComputedStyle(document.body).backgroundColor;
+        underlay.setAttribute("aria-hidden", "true");
+        try {
+          const savedReturn = JSON.parse(
+            sessionStorage.getItem("yucong-detail-return") ?? "null",
+          );
+          if (savedReturn?.previewHtml) {
+            const preview = document.createElement("div");
+            preview.className = "portfolio-home route-return-preview";
+            preview.style.setProperty("--portfolio-bg", savedReturn.color);
+            preview.style.setProperty("--portfolio-fg", savedReturn.foreground);
+            preview.style.setProperty("--portfolio-title", savedReturn.titleColor);
+            preview.style.setProperty("--portfolio-accent", savedReturn.accent);
+            underlay.style.setProperty("--return-fg", savedReturn.foreground);
+            preview.innerHTML = `
+              <div class="portfolio-backdrop"></div>
+              ${savedReturn.previewCanvas
+                ? `<img class="route-return-canvas" src="${savedReturn.previewCanvas}" alt="">`
+                : ""}
+              ${savedReturn.previewProgressHtml ?? ""}
+              <div class="portfolio-scenes">${savedReturn.previewHtml}</div>
+            `;
+            underlay.append(preview);
+            if (savedReturn.previewHeaderHtml) {
+              underlay.insertAdjacentHTML("beforeend", savedReturn.previewHeaderHtml);
+            }
+          }
+        } catch {}
+        document.body.prepend(underlay);
+        underlay.getBoundingClientRect();
+        document.querySelector(".page-shell--detail")?.getBoundingClientRect();
+
+        requestAnimationFrame(() => {
+          document.documentElement.classList.add("route-transition-returning");
+          window.setTimeout(() => {
+            try {
+              sessionStorage.setItem("yucong-route-restoring", "1");
+            } catch {}
+            if (useHistory) {
+              try {
+                sessionStorage.removeItem("yucong-detail-return");
+              } catch {}
+              window.history.back();
+            } else {
+              window.location.assign(link.href);
+            }
+          }, 760);
+        });
       }
 
       document.addEventListener("click", (event) => {
@@ -107,21 +355,49 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           event.ctrlKey ||
           event.shiftKey ||
           event.altKey ||
-          link.target === "_blank"
+          link.target === "_blank" ||
+          link.hasAttribute("download")
         ) return;
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin) return;
+        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
         event.preventDefault();
-        navigateWithCurtain(url.href, link.dataset.transitionColor);
+        if (link.dataset.detailReturn === "true") {
+          returnWithSlide(link, link.dataset.historyReturn === "true");
+          return;
+        }
+        navigateToPage(url.href, {
+          source: link,
+          color: link.dataset.transitionColor,
+          image: link.dataset.transitionImage,
+        });
+      });
+
+      document.addEventListener("pointerover", (event) => {
+        const link = event.target instanceof Element
+          ? event.target.closest("a[data-transition-link]")
+          : null;
+        if (link instanceof HTMLAnchorElement) prefetchPage(link.href);
+      }, { passive: true });
+
+      document.addEventListener("focusin", (event) => {
+        const link = event.target instanceof Element
+          ? event.target.closest("a[data-transition-link]")
+          : null;
+        if (link instanceof HTMLAnchorElement) prefetchPage(link.href);
       });
 
       window.addEventListener("site-transition-navigate", (event) => {
-        navigateWithCurtain(event.detail?.href, event.detail?.color);
+        navigateToPage(event.detail?.href, {
+          sceneId: event.detail?.sceneId,
+          color: event.detail?.color,
+          image: event.detail?.image,
+        });
       });
 
-      window.addEventListener("pageshow", () => {
-        document.documentElement.classList.remove("page-is-leaving");
-      });
+      window.setTimeout(() => {
+        document.documentElement.classList.remove("route-transition-arriving");
+      }, 1200);
     </script>
   </body>
 </html>

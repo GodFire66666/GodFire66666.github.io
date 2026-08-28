@@ -158,6 +158,7 @@ export async function startPortfolioReel() {
     canvas,
     alpha: true,
     antialias: true,
+    preserveDrawingBuffer: true,
     powerPreference: "high-performance",
   });
   renderer.outputColorSpace = SRGBColorSpace;
@@ -579,6 +580,8 @@ export async function startPortfolioReel() {
         detail: {
           href,
           color: activeScene?.dataset.sceneBackground ?? "#111214",
+          sceneId: activeScene?.id,
+          image: activeScene?.dataset.sceneImage,
         },
       }),
     );

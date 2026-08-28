@@ -13,7 +13,7 @@ const scenes = [
     eyebrow: "LLMs & Agent Training",
     eyebrowZh: "大语言模型与智能体训练",
     title: SITE.author,
-    titleZh: SITE.author,
+    titleZh: SITE.authorZh,
     description:
       "An algorithm engineer working on how models learn to reason, use tools, and act in complex environments.",
     descriptionZh:
@@ -204,6 +204,7 @@ const scenes = [
                 href={scene.href}
                 data-transition-link={!scene.external ? true : undefined}
                 data-transition-color={!scene.external ? scene.background : undefined}
+                data-transition-image={!scene.external ? scene.image : undefined}
                 target={scene.external ? "_blank" : undefined}
                 rel={scene.external ? "noreferrer" : undefined}
               >
@@ -220,7 +221,7 @@ const scenes = [
               )}
             </div>
 
-            <figure class="portfolio-fallback" aria-hidden="true">
+            <figure class="portfolio-fallback" data-route-cover aria-hidden="true">
               <img
                 src={scene.image}
                 alt={scene.imageAlt}
@@ -239,6 +240,40 @@ const scenes = [
       <span>↓</span>
     </p>
   </div>
+
+  <script is:inline>
+    (() => {
+      const sceneId = window.location.hash.slice(1);
+      const home = document.querySelector("[data-portfolio-home]");
+      const target = sceneId
+        ? document.getElementById(sceneId)
+        : document.getElementById("yucong");
+      if (!home || !target?.matches("[data-scene-index]")) return;
+
+      const targetIndex = Number(target.dataset.sceneIndex ?? 0);
+      document.querySelectorAll("[data-scene-index]").forEach((scene) => {
+        const active = scene === target;
+        scene.classList.toggle("active", active);
+        scene.toggleAttribute("inert", !active);
+        scene.setAttribute("aria-hidden", active ? "false" : "true");
+      });
+      document.querySelectorAll("[data-progress-index]").forEach((link) => {
+        const active = Number(link.dataset.progressIndex) === targetIndex;
+        link.classList.toggle("active", active);
+        if (active) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
+
+      home.style.setProperty("--portfolio-bg", target.dataset.sceneBackground);
+      home.style.setProperty("--portfolio-fg", target.dataset.sceneForeground);
+      home.style.setProperty("--portfolio-title", target.dataset.sceneTitle);
+      home.style.setProperty("--portfolio-accent", target.dataset.sceneAccent);
+      document.documentElement.classList.toggle(
+        "portfolio-theme-light",
+        target.dataset.sceneTheme === "light",
+      );
+    })();
+  </script>
 </BaseLayout>
 
 <script>
@@ -413,6 +448,21 @@ const scenes = [
     if (copy) gsap.set(copy, { opacity: index === activeIndex ? 1 : 0, y: 0 });
   });
   activateScene(activeIndex, true);
+
+  window.addEventListener("pageshow", () => {
+    const restoredIndex = sceneElements.findIndex(
+      (scene) => `#${scene.id}` === window.location.hash,
+    );
+    if (restoredIndex < 0) return;
+
+    const direction = restoredIndex < activeIndex ? -1 : 1;
+    activateScene(restoredIndex, true, direction, false);
+    window.dispatchEvent(
+      new CustomEvent("portfolio-reel-go-to", {
+        detail: { index: restoredIndex, immediate: true },
+      }),
+    );
+  });
 
   void import("../scripts/portfolio-reel")
     .then(({ startPortfolioReel }) => startPortfolioReel())
