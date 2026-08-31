@@ -77,83 +77,93 @@ const detailReturnHref = `/#${detailReturnScene}`;
 
 <script>
   const languageKey = "yucong-site-language";
-  const root = document.documentElement;
-  const toggle = document.querySelector<HTMLButtonElement>(
-    "[data-language-toggle]",
-  );
-  const detailReturnLink = document.querySelector<HTMLAnchorElement>(
-    "[data-detail-return]",
-  );
+  let headerController: AbortController | undefined;
 
-  if (detailReturnLink) {
-    try {
-      const savedReturn = JSON.parse(
-        sessionStorage.getItem("yucong-detail-return") ?? "null",
-      ) as { color?: string; detailPath?: string; returnHref?: string } | null;
-      if (
-        savedReturn?.detailPath === window.location.pathname &&
-        /^\/#(?:yucong|tarot|notes|writing)$/.test(savedReturn.returnHref ?? "")
-      ) {
-        detailReturnLink.href = savedReturn.returnHref ?? detailReturnLink.href;
-        detailReturnLink.dataset.historyReturn = "true";
-        if (savedReturn.color) {
-          detailReturnLink.dataset.transitionColor = savedReturn.color;
-        }
-      }
-    } catch {
-      // The server-rendered scene link remains a complete fallback.
-    }
-  }
-
-  function currentLanguage() {
-    return root.classList.contains("lang-zh") ? "zh" : "en";
-  }
-
-  function applyLanguage(language: "en" | "zh") {
-    root.classList.toggle("lang-en", language === "en");
-    root.classList.toggle("lang-zh", language === "zh");
-    root.lang = language === "zh" ? "zh-CN" : "en";
-
-    const title = document.body.dataset[`title${language === "zh" ? "Zh" : "En"}`];
-    const description =
-      document.body.dataset[`description${language === "zh" ? "Zh" : "En"}`];
-    if (title) document.title = title;
-    if (description) {
-      document
-        .querySelector('meta[name="description"]')
-        ?.setAttribute("content", description);
-    }
-
-    toggle?.querySelectorAll<HTMLElement>("[data-language-option]").forEach(
-      (option) => {
-        option.classList.toggle(
-          "active",
-          option.dataset.languageOption === language,
-        );
-      },
+  function initializeHeader() {
+    headerController?.abort();
+    headerController = new AbortController();
+    const { signal } = headerController;
+    const root = document.documentElement;
+    const toggle = document.querySelector<HTMLButtonElement>(
+      "[data-language-toggle]",
+    );
+    const detailReturnLink = document.querySelector<HTMLAnchorElement>(
+      "[data-detail-return]",
     );
 
-    if (toggle) {
-      toggle.setAttribute(
-        "aria-label",
-        language === "en" ? "Switch to Chinese" : "切换到英文",
+    if (detailReturnLink) {
+      try {
+        const savedReturn = JSON.parse(
+          sessionStorage.getItem("yucong-detail-return") ?? "null",
+        ) as { color?: string; detailPath?: string; returnHref?: string } | null;
+        if (
+          savedReturn?.detailPath === window.location.pathname &&
+          /^\/#(?:yucong|tarot|notes|writing)$/.test(savedReturn.returnHref ?? "")
+        ) {
+          detailReturnLink.href = savedReturn.returnHref ?? detailReturnLink.href;
+          detailReturnLink.dataset.historyReturn = "true";
+          if (savedReturn.color) {
+            detailReturnLink.dataset.transitionColor = savedReturn.color;
+          }
+        }
+      } catch {
+        // The server-rendered scene link remains a complete fallback.
+      }
+    }
+
+    function currentLanguage() {
+      return root.classList.contains("lang-zh") ? "zh" : "en";
+    }
+
+    function applyLanguage(language: "en" | "zh") {
+      root.classList.toggle("lang-en", language === "en");
+      root.classList.toggle("lang-zh", language === "zh");
+      root.lang = language === "zh" ? "zh-CN" : "en";
+
+      const title = document.body.dataset[`title${language === "zh" ? "Zh" : "En"}`];
+      const description =
+        document.body.dataset[`description${language === "zh" ? "Zh" : "En"}`];
+      if (title) document.title = title;
+      if (description) {
+        document
+          .querySelector('meta[name="description"]')
+          ?.setAttribute("content", description);
+      }
+
+      toggle?.querySelectorAll<HTMLElement>("[data-language-option]").forEach(
+        (option) => {
+          option.classList.toggle(
+            "active",
+            option.dataset.languageOption === language,
+          );
+        },
+      );
+
+      if (toggle) {
+        toggle.setAttribute(
+          "aria-label",
+          language === "en" ? "Switch to Chinese" : "切换到英文",
+        );
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("site-language-change", { detail: { language } }),
       );
     }
 
-    window.dispatchEvent(
-      new CustomEvent("site-language-change", { detail: { language } }),
-    );
+    applyLanguage(currentLanguage());
+
+    toggle?.addEventListener("click", () => {
+      const nextLanguage = currentLanguage() === "en" ? "zh" : "en";
+      applyLanguage(nextLanguage);
+      try {
+        localStorage.setItem(languageKey, nextLanguage);
+      } catch {
+        // The language still switches when storage is unavailable.
+      }
+    }, { signal });
   }
 
-  applyLanguage(currentLanguage());
-
-  toggle?.addEventListener("click", () => {
-    const nextLanguage = currentLanguage() === "en" ? "zh" : "en";
-    applyLanguage(nextLanguage);
-    try {
-      localStorage.setItem(languageKey, nextLanguage);
-    } catch {
-      // The language still switches when storage is unavailable.
-    }
-  });
+  document.addEventListener("astro:page-load", initializeHeader);
+  initializeHeader();
 </script>

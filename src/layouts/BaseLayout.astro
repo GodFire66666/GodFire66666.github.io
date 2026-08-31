@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro";
 import { SITE } from "../config";
+import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
 
 interface Props {
@@ -52,7 +53,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <title>{pageTitle}</title>
-    <script is:inline>
+    <ClientRouter fallback="swap" />
+    <script is:inline data-astro-rerun>
       try {
         const language = localStorage.getItem("yucong-site-language");
         if (language === "zh") {
@@ -63,18 +65,35 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           document.documentElement.classList.add("route-transition-arriving");
           sessionStorage.removeItem("yucong-route-transition");
         }
+        if (sessionStorage.getItem("yucong-route-restoring") === "1") {
+          document.documentElement.classList.add(
+            "route-transition-returning",
+            "route-transition-restoring",
+          );
+        }
       } catch {
         // Keep the English default when storage is unavailable.
       }
     </script>
+    <script>
+      import { navigate } from "astro:transitions/client";
+
+      window.__yucongNavigate = navigate;
+    </script>
   </head>
   <body
+    transition:animate="none"
     style={detail ? `--detail-bg:${detailBackground};--detail-fg:${detailForeground};--detail-accent:${detailAccent};` : undefined}
     data-title-en={pageTitle}
     data-title-zh={pageTitleZh}
     data-description-en={description}
     data-description-zh={descriptionZh}
   >
+    <div
+      id="route-transition-layer"
+      transition:persist="route-transition-layer"
+      aria-hidden="true"
+    ></div>
     <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--detail": detail, "page-shell--wide": wide }]}>
       <Header
         overlay={immersive}
@@ -92,10 +111,78 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         <span class="zh-text">让笔记随时间生长。</span>
       </footer>
     </div>
-    <script is:inline>
+    <script is:inline data-astro-rerun>
+      window.__yucongTransitionController?.abort();
+      const transitionController = new AbortController();
+      window.__yucongTransitionController = transitionController;
+      const transitionSignal = transitionController.signal;
       const prefetchedPages = new Set();
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
       let routeIsChanging = false;
+      let returnRevealTimer = 0;
+      let returnReadyFrame = 0;
+
+      function finishReturnReveal() {
+        window.clearTimeout(returnRevealTimer);
+        window.cancelAnimationFrame(returnReadyFrame);
+        returnReadyFrame = 0;
+        const underlay = document.querySelector(".route-return-underlay");
+        if (!underlay) {
+          document.documentElement.classList.remove(
+            "route-transition-returning",
+            "route-transition-restoring",
+          );
+          return;
+        }
+        underlay.remove();
+        document.documentElement.classList.remove(
+          "route-transition-returning",
+          "route-transition-restoring",
+        );
+      }
+
+      function handlePortfolioHomeReady(event) {
+        const requestedScene = window.location.hash.slice(1) || "yucong";
+        const renderedScene = event.detail?.sceneId;
+        if (renderedScene && renderedScene !== requestedScene) return;
+
+        let stableFrames = 0;
+        const readyNotBefore = performance.now() + 650;
+        const deadline = performance.now() + 1500;
+        const waitForSettledHome = () => {
+          const home = document.querySelector("[data-portfolio-home]");
+          const activeScene = home?.querySelector(".portfolio-scene.active");
+          const activeCopy = activeScene?.querySelector(".portfolio-copy");
+          const inactiveCopies = home
+            ? Array.from(home.querySelectorAll(".portfolio-scene:not(.active) .portfolio-copy"))
+            : [];
+          const activeOpacity = activeCopy
+            ? Number.parseFloat(getComputedStyle(activeCopy).opacity)
+            : 0;
+          const inactiveVisible = inactiveCopies.some((copy) =>
+            Number.parseFloat(getComputedStyle(copy).opacity) > 0.02
+          );
+          const settled = Boolean(
+            performance.now() >= readyNotBefore &&
+            (home?.classList.contains("webgl-ready") || event.detail?.mode === "static") &&
+            activeScene?.id === requestedScene &&
+            activeOpacity > 0.98 &&
+            !inactiveVisible
+          );
+
+          stableFrames = settled ? stableFrames + 1 : 0;
+          if (stableFrames >= 3) {
+            finishReturnReveal();
+            return;
+          }
+          if (performance.now() < deadline) {
+            returnReadyFrame = requestAnimationFrame(waitForSettledHome);
+          }
+        };
+
+        window.cancelAnimationFrame(returnReadyFrame);
+        returnReadyFrame = requestAnimationFrame(waitForSettledHome);
+      }
 
       function clearDepartingState() {
         let restoringHome = false;
@@ -115,22 +202,39 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           .forEach((element) => element.classList.remove("route-transition-origin-hidden"));
         document.querySelectorAll(".route-transition-overlay")
           .forEach((element) => element.remove());
-        document.documentElement.classList.remove("route-transition-returning");
-        document.querySelectorAll(".route-return-underlay")
-          .forEach((element) => element.remove());
         routeIsChanging = false;
-        if (restoringHome) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              window.setTimeout(() => {
-                document.documentElement.classList.remove("route-transition-restoring");
-              }, 180);
-            });
-          });
+        const keepReturnCover = restoringHome
+          && Boolean(document.querySelector("[data-portfolio-home]"))
+          && Boolean(document.querySelector(".route-return-underlay"));
+        if (keepReturnCover) {
+          document.documentElement.classList.add("route-transition-returning");
+          returnRevealTimer = window.setTimeout(finishReturnReveal, 1800);
+        } else {
+          document.documentElement.classList.remove(
+            "route-transition-returning",
+            "route-transition-restoring",
+          );
+          document.querySelectorAll(".route-return-underlay")
+            .forEach((element) => element.remove());
         }
       }
 
-      window.addEventListener("pageshow", clearDepartingState);
+      window.addEventListener("pageshow", clearDepartingState, {
+        signal: transitionSignal,
+      });
+      document.addEventListener("astro:after-swap", clearDepartingState, {
+        signal: transitionSignal,
+      });
+      window.addEventListener("portfolio-home-ready", handlePortfolioHomeReady, {
+        signal: transitionSignal,
+      });
+
+      function clientNavigate(href, options) {
+        if (typeof window.__yucongNavigate === "function") {
+          return window.__yucongNavigate(href, options);
+        }
+        window.location.assign(href);
+      }
 
       function prefetchPage(href) {
         if (!href || prefetchedPages.has(href)) return;
@@ -207,7 +311,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           overlay.append(image);
         }
 
-        document.body.append(overlay);
+        const transitionLayer = document.getElementById("route-transition-layer");
+        (transitionLayer ?? document.body).append(overlay);
         overlay.getBoundingClientRect();
         scene?.classList.remove("route-transition-source");
         sourceCover?.classList.add("route-transition-origin-hidden");
@@ -252,7 +357,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           }
         }
         if (reducedMotion.matches) {
-          window.location.assign(url.href);
+          clientNavigate(url.href);
           return;
         }
 
@@ -268,24 +373,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
         requestAnimationFrame(() => {
           createRouteOverlay(scene, options);
-          window.setTimeout(() => window.location.assign(url.href), 780);
+          window.setTimeout(() => clientNavigate(url.href), 780);
         });
       }
 
-      function returnWithSlide(link, useHistory) {
+      function returnWithSlide(link) {
         if (routeIsChanging) return;
         if (reducedMotion.matches) {
           try {
             sessionStorage.setItem("yucong-route-restoring", "1");
+            sessionStorage.removeItem("yucong-detail-return");
           } catch {}
-          if (useHistory) {
-            try {
-              sessionStorage.removeItem("yucong-detail-return");
-            } catch {}
-            window.history.back();
-          } else {
-            window.location.assign(link.href);
-          }
+          clientNavigate(link.href, { history: "replace" });
           return;
         }
 
@@ -321,7 +420,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             }
           }
         } catch {}
-        document.body.prepend(underlay);
+        const transitionLayer = document.getElementById("route-transition-layer");
+        (transitionLayer ?? document.body).prepend(underlay);
         underlay.getBoundingClientRect();
         document.querySelector(".page-shell--detail")?.getBoundingClientRect();
 
@@ -330,15 +430,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           window.setTimeout(() => {
             try {
               sessionStorage.setItem("yucong-route-restoring", "1");
+              sessionStorage.removeItem("yucong-detail-return");
             } catch {}
-            if (useHistory) {
-              try {
-                sessionStorage.removeItem("yucong-detail-return");
-              } catch {}
-              window.history.back();
-            } else {
-              window.location.assign(link.href);
-            }
+            clientNavigate(link.href, { history: "replace" });
           }, 760);
         });
       }
@@ -363,7 +457,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         if (url.pathname === window.location.pathname && url.search === window.location.search) return;
         event.preventDefault();
         if (link.dataset.detailReturn === "true") {
-          returnWithSlide(link, link.dataset.historyReturn === "true");
+          returnWithSlide(link);
           return;
         }
         navigateToPage(url.href, {
@@ -371,21 +465,21 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           color: link.dataset.transitionColor,
           image: link.dataset.transitionImage,
         });
-      });
+      }, { capture: true, signal: transitionSignal });
 
       document.addEventListener("pointerover", (event) => {
         const link = event.target instanceof Element
           ? event.target.closest("a[data-transition-link]")
           : null;
         if (link instanceof HTMLAnchorElement) prefetchPage(link.href);
-      }, { passive: true });
+      }, { passive: true, signal: transitionSignal });
 
       document.addEventListener("focusin", (event) => {
         const link = event.target instanceof Element
           ? event.target.closest("a[data-transition-link]")
           : null;
         if (link instanceof HTMLAnchorElement) prefetchPage(link.href);
-      });
+      }, { signal: transitionSignal });
 
       window.addEventListener("site-transition-navigate", (event) => {
         navigateToPage(event.detail?.href, {
@@ -393,7 +487,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           color: event.detail?.color,
           image: event.detail?.image,
         });
-      });
+      }, { signal: transitionSignal });
 
       window.setTimeout(() => {
         document.documentElement.classList.remove("route-transition-arriving");

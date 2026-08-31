@@ -241,23 +241,24 @@ const scenes = [
     </p>
   </div>
 
-  <script is:inline>
+  <script is:inline data-astro-rerun>
     (() => {
       const sceneId = window.location.hash.slice(1);
       const home = document.querySelector("[data-portfolio-home]");
-      const target = sceneId
-        ? document.getElementById(sceneId)
-        : document.getElementById("yucong");
+      const homeScenes = home
+        ? Array.from(home.querySelectorAll("[data-scene-index]"))
+        : [];
+      const target = homeScenes.find((scene) => scene.id === (sceneId || "yucong"));
       if (!home || !target?.matches("[data-scene-index]")) return;
 
       const targetIndex = Number(target.dataset.sceneIndex ?? 0);
-      document.querySelectorAll("[data-scene-index]").forEach((scene) => {
+      homeScenes.forEach((scene) => {
         const active = scene === target;
         scene.classList.toggle("active", active);
         scene.toggleAttribute("inert", !active);
         scene.setAttribute("aria-hidden", active ? "false" : "true");
       });
-      document.querySelectorAll("[data-progress-index]").forEach((link) => {
+      home.querySelectorAll("[data-progress-index]").forEach((link) => {
         const active = Number(link.dataset.progressIndex) === targetIndex;
         link.classList.toggle("active", active);
         if (active) link.setAttribute("aria-current", "true");
@@ -279,125 +280,159 @@ const scenes = [
 <script>
   import { gsap } from "gsap";
 
-  const home = document.querySelector<HTMLElement>("[data-portfolio-home]");
-  const sceneElements = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-scene-index]"),
-  );
-  const progressLinks = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-progress-index]"),
-  );
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const desktopReel = window.matchMedia("(min-width: 761px)");
-  const hashIndex = sceneElements.findIndex((scene) => `#${scene.id}` === location.hash);
-  let activeIndex = hashIndex >= 0 ? hashIndex : 0;
-  let touchStartY = 0;
-  let touchCurrentY = 0;
+  let homeController: AbortController | undefined;
+  let initializedHome: HTMLElement | null = null;
+  let reelModule: Promise<typeof import("../scripts/portfolio-reel")> | undefined;
 
-  document.documentElement.classList.add("portfolio-home-active");
-  window.scrollTo(0, 0);
+  function loadPortfolioReel() {
+    reelModule ??= import("../scripts/portfolio-reel");
+    return reelModule;
+  }
 
-  function activateScene(index: number, immediate = false, direction = 1, broadcast = true) {
-    const next = sceneElements[index];
-    if (!home || !next) return;
+  function stopPortfolioHome() {
+    homeController?.abort();
+    homeController = undefined;
+    initializedHome = null;
+    void reelModule?.then(({ stopPortfolioReel }) => stopPortfolioReel());
+    document.documentElement.classList.remove("portfolio-home-active");
+  }
 
-    const previous = sceneElements[activeIndex];
-    const previousCopy = previous?.querySelector<HTMLElement>(".portfolio-copy");
-    const nextCopy = next.querySelector<HTMLElement>(".portfolio-copy");
-    if (!immediate && previousCopy && previous !== next) {
-      gsap.killTweensOf(previousCopy);
-      gsap.to(previousCopy, {
-        opacity: 0,
-        y: -22 * direction,
-        duration: 0.32,
-        ease: "power1.in",
-        overwrite: true,
-      });
+  function initializePortfolioHome() {
+    const home = document.querySelector<HTMLElement>("[data-portfolio-home]");
+    if (!home) {
+      stopPortfolioHome();
+      return;
     }
-    if (nextCopy) {
-      gsap.killTweensOf(nextCopy);
-      if (immediate) {
-        gsap.set(nextCopy, { opacity: 1, y: 0 });
-      } else {
-        gsap.set(nextCopy, { opacity: 0, y: 22 * direction });
-        gsap.to(nextCopy, {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          delay: 0.35,
-          ease: "power1.out",
+    if (home === initializedHome && !homeController?.signal.aborted) return;
+    const portfolioHome = home;
+
+    stopPortfolioHome();
+    initializedHome = portfolioHome;
+    homeController = new AbortController();
+    const { signal } = homeController;
+    const sceneElements = Array.from(
+      portfolioHome.querySelectorAll<HTMLElement>("[data-scene-index]"),
+    );
+    const progressLinks = Array.from(
+      portfolioHome.querySelectorAll<HTMLElement>("[data-progress-index]"),
+    );
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktopReel = window.matchMedia("(min-width: 761px)");
+    const hashIndex = sceneElements.findIndex(
+      (scene) => `#${scene.id}` === location.hash,
+    );
+    let activeIndex = hashIndex >= 0 ? hashIndex : 0;
+    let touchStartY = 0;
+    let touchCurrentY = 0;
+
+    document.documentElement.classList.add("portfolio-home-active");
+    window.scrollTo(0, 0);
+
+    function activateScene(
+      index: number,
+      immediate = false,
+      direction = 1,
+      broadcast = true,
+    ) {
+      const next = sceneElements[index];
+      if (!next || signal.aborted) return;
+
+      const previous = sceneElements[activeIndex];
+      const previousCopy = previous?.querySelector<HTMLElement>(".portfolio-copy");
+      const nextCopy = next.querySelector<HTMLElement>(".portfolio-copy");
+      if (!immediate && previousCopy && previous !== next) {
+        gsap.killTweensOf(previousCopy);
+        gsap.to(previousCopy, {
+          opacity: 0,
+          y: -22 * direction,
+          duration: 0.32,
+          ease: "power1.in",
           overwrite: true,
         });
       }
-    }
+      if (nextCopy) {
+        gsap.killTweensOf(nextCopy);
+        if (immediate) {
+          gsap.set(nextCopy, { opacity: 1, y: 0 });
+        } else {
+          gsap.set(nextCopy, { opacity: 0, y: 22 * direction });
+          gsap.to(nextCopy, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            delay: 0.35,
+            ease: "power1.out",
+            overwrite: true,
+          });
+        }
+      }
 
-    activeIndex = index;
-    sceneElements.forEach((scene, sceneIndex) => {
-      scene.classList.toggle("active", sceneIndex === index);
-      scene.inert = sceneIndex !== index;
-      scene.setAttribute("aria-hidden", sceneIndex === index ? "false" : "true");
-    });
-    progressLinks.forEach((link, linkIndex) => {
-      link.classList.toggle("active", linkIndex === index);
-      if (linkIndex === index) link.setAttribute("aria-current", "true");
-      else link.removeAttribute("aria-current");
-    });
+      activeIndex = index;
+      sceneElements.forEach((scene, sceneIndex) => {
+        scene.classList.toggle("active", sceneIndex === index);
+        scene.inert = sceneIndex !== index;
+        scene.setAttribute("aria-hidden", sceneIndex === index ? "false" : "true");
+      });
+      progressLinks.forEach((link, linkIndex) => {
+        link.classList.toggle("active", linkIndex === index);
+        if (linkIndex === index) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
 
-    home.style.setProperty("--portfolio-bg", next.dataset.sceneBackground ?? "#202728");
-    home.style.setProperty("--portfolio-fg", next.dataset.sceneForeground ?? "#f6f3ed");
-    home.style.setProperty("--portfolio-title", next.dataset.sceneTitle ?? "#f6f3ed");
-    home.style.setProperty("--portfolio-accent", next.dataset.sceneAccent ?? "#efb39f");
-    document.documentElement.classList.toggle(
-      "portfolio-theme-light",
-      next.dataset.sceneTheme === "light",
-    );
-    home.classList.remove("portfolio-at-end");
-    history.replaceState(null, "", `#${next.id}`);
-
-    if (broadcast) {
-      window.dispatchEvent(
-        new CustomEvent("portfolio-scene-change", {
-          detail: { index, direction, immediate, source: "page" },
-        }),
+      portfolioHome.style.setProperty("--portfolio-bg", next.dataset.sceneBackground ?? "#202728");
+      portfolioHome.style.setProperty("--portfolio-fg", next.dataset.sceneForeground ?? "#f6f3ed");
+      portfolioHome.style.setProperty("--portfolio-title", next.dataset.sceneTitle ?? "#f6f3ed");
+      portfolioHome.style.setProperty("--portfolio-accent", next.dataset.sceneAccent ?? "#efb39f");
+      document.documentElement.classList.toggle(
+        "portfolio-theme-light",
+        next.dataset.sceneTheme === "light",
       );
-    }
-  }
+      portfolioHome.classList.remove("portfolio-at-end");
+      history.replaceState(history.state, "", `#${next.id}`);
 
-  function goToScene(index: number, immediate = false) {
-    const sceneCount = sceneElements.length;
-    const nextIndex = ((index % sceneCount) + sceneCount) % sceneCount;
-    if (nextIndex === activeIndex && !immediate) return;
-
-    if (
-      desktopReel.matches &&
-      !reducedMotion.matches &&
-      home?.classList.contains("webgl-ready")
-    ) {
-      window.dispatchEvent(
-        new CustomEvent("portfolio-reel-go-to", {
-          detail: { index: nextIndex, immediate },
-        }),
-      );
-      return;
+      if (broadcast) {
+        window.dispatchEvent(
+          new CustomEvent("portfolio-scene-change", {
+            detail: { index, direction, immediate, source: "page" },
+          }),
+        );
+      }
     }
 
-    const direction = index < activeIndex ? -1 : 1;
-    activateScene(nextIndex, immediate || reducedMotion.matches, direction);
-  }
+    function goToScene(index: number, immediate = false) {
+      const sceneCount = sceneElements.length;
+      const nextIndex = ((index % sceneCount) + sceneCount) % sceneCount;
+      if (nextIndex === activeIndex && !immediate) return;
 
-  window.addEventListener("portfolio-scene-change", (event) => {
-    const detail = (event as CustomEvent<{
-      index: number;
-      direction?: number;
-      immediate?: boolean;
-      source?: string;
-    }>).detail;
-    if (detail.source === "page") return;
-    activateScene(detail.index, detail.immediate, detail.direction ?? 1, false);
-  });
+      if (
+        desktopReel.matches &&
+        !reducedMotion.matches &&
+        portfolioHome.classList.contains("webgl-ready")
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("portfolio-reel-go-to", {
+            detail: { index: nextIndex, immediate },
+          }),
+        );
+        return;
+      }
 
-  window.addEventListener(
-    "keydown",
-    (event) => {
+      const direction = index < activeIndex ? -1 : 1;
+      activateScene(nextIndex, immediate || reducedMotion.matches, direction);
+    }
+
+    window.addEventListener("portfolio-scene-change", (event) => {
+      const detail = (event as CustomEvent<{
+        index: number;
+        direction?: number;
+        immediate?: boolean;
+        source?: string;
+      }>).detail;
+      if (detail.source === "page") return;
+      activateScene(detail.index, detail.immediate, detail.direction ?? 1, false);
+    }, { signal });
+
+    window.addEventListener("keydown", (event) => {
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
 
@@ -411,63 +446,65 @@ const scenes = [
       if (event.key === "Home") goToScene(0);
       else if (event.key === "End") goToScene(sceneElements.length - 1);
       else goToScene(activeIndex + (backward ? -1 : 1));
-    },
-  );
-  window.addEventListener(
-    "touchstart",
-    (event) => {
+    }, { signal });
+    window.addEventListener("touchstart", (event) => {
       touchStartY = event.touches[0]?.clientY ?? 0;
       touchCurrentY = touchStartY;
-    },
-    { passive: true },
-  );
-  window.addEventListener(
-    "touchmove",
-    (event) => {
+    }, { passive: true, signal });
+    window.addEventListener("touchmove", (event) => {
       if (event.touches.length > 1) return;
       event.preventDefault();
       touchCurrentY = event.touches[0]?.clientY ?? touchCurrentY;
-    },
-    { passive: false },
-  );
-  window.addEventListener("touchend", () => {
-    const distance = touchStartY - touchCurrentY;
-    if (Math.abs(distance) >= 32) {
-      goToScene(activeIndex + (distance > 0 ? 1 : -1));
+    }, { passive: false, signal });
+    window.addEventListener("touchend", () => {
+      const distance = touchStartY - touchCurrentY;
+      if (Math.abs(distance) >= 32) {
+        goToScene(activeIndex + (distance > 0 ? 1 : -1));
+      }
+    }, { signal });
+    progressLinks.forEach((link, index) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        goToScene(index);
+      }, { signal });
+    });
+
+    sceneElements.forEach((scene, index) => {
+      const copy = scene.querySelector<HTMLElement>(".portfolio-copy");
+      if (copy) gsap.set(copy, { opacity: index === activeIndex ? 1 : 0, y: 0 });
+    });
+    activateScene(activeIndex, true);
+
+    const signalStaticHomeReady = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (signal.aborted) return;
+          window.dispatchEvent(new CustomEvent("portfolio-home-ready", {
+            detail: { mode: "static", sceneId: sceneElements[activeIndex]?.id },
+          }));
+        });
+      });
+    };
+
+    if (reducedMotion.matches) {
+      signalStaticHomeReady();
+      return;
     }
-  });
-  progressLinks.forEach((link, index) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      goToScene(index);
-    });
-  });
 
-  sceneElements.forEach((scene, index) => {
-    const copy = scene.querySelector<HTMLElement>(".portfolio-copy");
-    if (copy) gsap.set(copy, { opacity: index === activeIndex ? 1 : 0, y: 0 });
-  });
-  activateScene(activeIndex, true);
+    void loadPortfolioReel()
+      .then(({ startPortfolioReel }) => {
+        if (signal.aborted) return;
+        return startPortfolioReel();
+      })
+      .catch((error) => {
+        if (signal.aborted) return;
+        console.error("Portfolio WebGL failed to start", error);
+        portfolioHome.classList.remove("webgl-ready");
+        signalStaticHomeReady();
+      });
+  }
 
-  window.addEventListener("pageshow", () => {
-    const restoredIndex = sceneElements.findIndex(
-      (scene) => `#${scene.id}` === window.location.hash,
-    );
-    if (restoredIndex < 0) return;
-
-    const direction = restoredIndex < activeIndex ? -1 : 1;
-    activateScene(restoredIndex, true, direction, false);
-    window.dispatchEvent(
-      new CustomEvent("portfolio-reel-go-to", {
-        detail: { index: restoredIndex, immediate: true },
-      }),
-    );
-  });
-
-  void import("../scripts/portfolio-reel")
-    .then(({ startPortfolioReel }) => startPortfolioReel())
-    .catch((error) => {
-      console.error("Portfolio WebGL failed to start", error);
-      home?.classList.remove("webgl-ready");
-    });
+  document.addEventListener("astro:page-load", initializePortfolioHome);
+  document.addEventListener("astro:before-swap", stopPortfolioHome);
+  initializePortfolioHome();
 </script>

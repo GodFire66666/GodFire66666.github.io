@@ -52,6 +52,12 @@ const SPRING_MASS = 2.5;
 const SPRING_TENSION = 80;
 const SPRING_FRICTION = 24;
 
+let stopActiveReel: (() => void) | undefined;
+
+export function stopPortfolioReel() {
+  stopActiveReel?.();
+}
+
 const vertexShader = `
   uniform float uTime;
   uniform float uBend;
@@ -132,20 +138,20 @@ const fragmentShader = `
 `;
 
 export async function startPortfolioReel() {
+  stopPortfolioReel();
   const home = document.querySelector<HTMLElement>("[data-portfolio-home]");
-  const canvas = document.querySelector<HTMLCanvasElement>(
-    "[data-portfolio-canvas]",
-  );
-  const sceneElements = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-scene-index]"),
-  );
-  const progressNav = document.querySelector<HTMLElement>(
-    ".portfolio-progress",
-  );
+  const canvas = home?.querySelector<HTMLCanvasElement>("[data-portfolio-canvas]");
+  const sceneElements = home
+    ? Array.from(home.querySelectorAll<HTMLElement>("[data-scene-index]"))
+    : [];
+  const progressNav = home?.querySelector<HTMLElement>(".portfolio-progress");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   if (!home || !canvas || sceneElements.length === 0 || reducedMotion.matches)
     return;
+
+  const controller = new AbortController();
+  const { signal } = controller;
 
   const startsOnMobile = window.innerWidth <= MOBILE_BREAKPOINT;
   const geometry = new PlaneGeometry(
@@ -163,6 +169,33 @@ export async function startPortfolioReel() {
   });
   renderer.outputColorSpace = SRGBColorSpace;
 
+  let animationFrame = 0;
+  let wheelIdleTimer = 0;
+  let timer: Timer | undefined;
+  let textures: Texture[] = [];
+  let groups: ReelGroup[] = [];
+  let stopped = false;
+
+  const cleanup = () => {
+    if (stopped) return;
+    stopped = true;
+    controller.abort();
+    window.clearTimeout(wheelIdleTimer);
+    window.cancelAnimationFrame(animationFrame);
+    timer?.disconnect();
+    groups.forEach((group) => group.userData.material.dispose());
+    textures.forEach((texture) => texture.dispose());
+    geometry.dispose();
+    renderer.dispose();
+    home.classList.remove(
+      "webgl-ready",
+      "reel-card-hovered",
+      "portfolio-navigation-preview",
+    );
+    if (stopActiveReel === cleanup) stopActiveReel = undefined;
+  };
+  stopActiveReel = cleanup;
+
   const webglScene = new Scene();
   const reelStage = new Group();
   webglScene.add(reelStage);
@@ -171,11 +204,15 @@ export async function startPortfolioReel() {
   camera.position.z = startsOnMobile ? 5 : 5.8;
 
   const loader = new TextureLoader();
-  const textures = await Promise.all(
+  textures = await Promise.all(
     sceneElements.map((scene) =>
       loader.loadAsync(scene.dataset.sceneImage ?? ""),
     ),
   );
+  if (signal.aborted || !home.isConnected || !canvas.isConnected) {
+    cleanup();
+    return;
+  }
   textures.forEach((texture) => {
     texture.colorSpace = SRGBColorSpace;
     texture.minFilter = LinearMipmapLinearFilter;
@@ -186,7 +223,7 @@ export async function startPortfolioReel() {
     );
   });
 
-  const groups = textures.map((texture, index) => {
+  groups = textures.map((texture, index) => {
     const scene = sceneElements[index];
     const material = new ShaderMaterial({
       uniforms: {
@@ -244,16 +281,15 @@ export async function startPortfolioReel() {
   let renderedProgress = initialIndex;
   let springVelocity = 0;
   let wheelAccumulator = 0;
-  let wheelIdleTimer = 0;
   let visibleHeight = 1;
   let visibleWidth = 1;
   let desktopStep = 1;
-  let animationFrame = 0;
   let previousFrameTime = performance.now();
   let mobileTransitionFrom = initialIndex;
   let mobileTransitionStartedAt = 0;
   let navigationPreview = false;
   let navigationPreviewMix = 0;
+  let firstFrameRendered = false;
 
   function isMobile() {
     return window.innerWidth <= MOBILE_BREAKPOINT;
@@ -595,20 +631,21 @@ export async function startPortfolioReel() {
 
   progressNav?.addEventListener("pointerenter", () => {
     setNavigationPreview(true);
-  });
+  }, { signal });
   progressNav?.addEventListener("pointerleave", () => {
     setNavigationPreview(false);
-  });
+  }, { signal });
   progressNav?.addEventListener("focusin", () => {
     setNavigationPreview(true);
-  });
+  }, { signal });
   progressNav?.addEventListener("focusout", () => {
     window.setTimeout(() => {
+      if (signal.aborted) return;
       setNavigationPreview(progressNav.contains(document.activeElement));
     });
-  });
+  }, { signal });
 
-  window.addEventListener("wheel", handleWheel, { passive: false });
+  window.addEventListener("wheel", handleWheel, { passive: false, signal });
   window.addEventListener(
     "pointermove",
     (event) => {
@@ -620,23 +657,23 @@ export async function startPortfolioReel() {
           Boolean(cardHitAt(event.clientX, event.clientY)),
       );
     },
-    { passive: true },
+    { passive: true, signal },
   );
   window.addEventListener("pointerleave", () => {
     home.classList.remove("reel-card-hovered");
-  });
+  }, { signal });
   window.addEventListener("click", (event) => {
     if (isInteractiveTarget(event.target)) return;
     const hit = cardHitAt(event.clientX, event.clientY);
     if (!hit) return;
     if (hit.distance < 0.5) openActiveCard();
     else goToIndex(hit.groupIndex);
-  });
-  window.addEventListener("resize", resize, { passive: true });
+  }, { signal });
+  window.addEventListener("resize", resize, { passive: true, signal });
   window.addEventListener("portfolio-reel-go-to", (event) => {
     const detail = (event as CustomEvent<ReelGoToDetail>).detail;
     goToIndex(detail.index, detail.immediate);
-  });
+  }, { signal });
   window.addEventListener("portfolio-scene-change", (event) => {
     if (!isMobile()) return;
     const detail = (event as CustomEvent<SceneChangeDetail>).detail;
@@ -650,17 +687,17 @@ export async function startPortfolioReel() {
       mobileTransitionFrom = renderedProgress;
       mobileTransitionStartedAt = performance.now();
     }
-  });
+  }, { signal });
 
-  const timer = new Timer();
+  timer = new Timer();
   timer.connect(document);
 
   function render(timestamp: number) {
     animationFrame = 0;
     if (document.hidden) return;
 
-    timer.update(timestamp);
-    const elapsed = timer.getElapsed();
+    timer?.update(timestamp);
+    const elapsed = timer?.getElapsed() ?? 0;
     const deltaTime = Math.min(
       0.032,
       Math.max(0.001, (timestamp - previousFrameTime) / 1000),
@@ -713,6 +750,12 @@ export async function startPortfolioReel() {
       materialPointer.copy(smoothedPointer);
     });
     renderer.render(webglScene, camera);
+    if (!firstFrameRendered) {
+      firstFrameRendered = true;
+      window.dispatchEvent(new CustomEvent("portfolio-home-ready", {
+        detail: { sceneId: sceneElements[modulo(committedVirtualIndex)]?.id },
+      }));
+    }
     animationFrame = window.requestAnimationFrame(render);
   }
 
@@ -723,8 +766,9 @@ export async function startPortfolioReel() {
     }
   }
 
-  document.addEventListener("visibilitychange", resumeRendering);
+  document.addEventListener("visibilitychange", resumeRendering, { signal });
   resize();
   home.classList.add("webgl-ready");
   resumeRendering();
+  return cleanup;
 }

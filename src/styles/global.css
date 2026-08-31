@@ -1730,6 +1730,10 @@ html.portfolio-home-active .page-shell--immersive footer {
 }
 
 /* Shared immersive detail pages */
+#route-transition-layer {
+  display: contents;
+}
+
 .route-transition-overlay {
   position: fixed;
   z-index: 1000;
@@ -1791,7 +1795,7 @@ html.part-detail-active body {
 
 .route-return-underlay {
   position: fixed;
-  z-index: 0;
+  z-index: 1100;
   inset: 0;
   overflow: hidden;
   clip-path: inset(0 0 0 100%);
@@ -1843,6 +1847,11 @@ html.route-transition-returning {
 html.route-transition-returning .route-return-underlay {
   clip-path: inset(0);
   transition: clip-path 760ms cubic-bezier(0.75, 0, 0.25, 1);
+}
+
+html.route-transition-restoring .route-return-underlay {
+  clip-path: inset(0);
+  transition: none;
 }
 
 html.route-transition-returning .page-shell--detail {

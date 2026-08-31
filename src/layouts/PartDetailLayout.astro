@@ -218,36 +218,56 @@ const titleWords = title.trim().split(/\s+/);
 </BaseLayout>
 
 <script>
-  const detailPage = document.querySelector<HTMLElement>("[data-part-detail]");
-  const revealElements = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-detail-reveal]"),
-  );
-  const nextSection = document.querySelector<HTMLElement>("[data-detail-next]");
-  const nextLink = nextSection?.querySelector<HTMLAnchorElement>("a");
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  let nextWheel = 0;
+  let detailController: AbortController | undefined;
+  let detailObserver: IntersectionObserver | undefined;
+  let detailEnterFrame = 0;
   let nextWheelTimer = 0;
 
-  document.documentElement.classList.add("part-detail-active");
-  requestAnimationFrame(() => detailPage?.classList.add("detail-entered"));
-
-  if (!reducedMotion.matches) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add("detail-visible");
-        });
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0 },
-    );
-    revealElements.forEach((element) => observer.observe(element));
-  } else {
-    revealElements.forEach((element) => element.classList.add("detail-visible"));
+  function stopPartDetail() {
+    detailController?.abort();
+    detailController = undefined;
+    detailObserver?.disconnect();
+    detailObserver = undefined;
+    window.cancelAnimationFrame(detailEnterFrame);
+    window.clearTimeout(nextWheelTimer);
+    document.documentElement.classList.remove("part-detail-active");
   }
 
-  window.addEventListener(
-    "wheel",
-    (event) => {
+  function initializePartDetail() {
+    stopPartDetail();
+    const detailPage = document.querySelector<HTMLElement>("[data-part-detail]");
+    if (!detailPage) return;
+
+    detailController = new AbortController();
+    const { signal } = detailController;
+    const revealElements = Array.from(
+      detailPage.querySelectorAll<HTMLElement>("[data-detail-reveal]"),
+    );
+    const nextSection = detailPage.querySelector<HTMLElement>("[data-detail-next]");
+    const nextLink = nextSection?.querySelector<HTMLAnchorElement>("a");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let nextWheel = 0;
+
+    document.documentElement.classList.add("part-detail-active");
+    detailEnterFrame = requestAnimationFrame(() => {
+      if (!signal.aborted) detailPage.classList.add("detail-entered");
+    });
+
+    if (!reducedMotion.matches) {
+      detailObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("detail-visible");
+          });
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0 },
+      );
+      revealElements.forEach((element) => detailObserver?.observe(element));
+    } else {
+      revealElements.forEach((element) => element.classList.add("detail-visible"));
+    }
+
+    window.addEventListener("wheel", (event) => {
       if (!nextSection || !nextLink || reducedMotion.matches || event.deltaY <= 0) return;
       const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 3;
       if (!atBottom) {
@@ -260,7 +280,10 @@ const titleWords = title.trim().split(/\s+/);
       if (nextWheel < 520) return;
       nextWheel = 0;
       nextLink.click();
-    },
-    { passive: true },
-  );
+    }, { passive: true, signal });
+  }
+
+  document.addEventListener("astro:page-load", initializePartDetail);
+  document.addEventListener("astro:before-swap", stopPartDetail);
+  initializePartDetail();
 </script>
