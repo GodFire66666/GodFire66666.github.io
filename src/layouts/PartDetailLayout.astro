@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import DetailScrollCue from "../components/DetailScrollCue.astro";
 
 interface MetaItem {
   label: string;
@@ -10,6 +11,7 @@ interface MetaItem {
 
 interface Props {
   part: string;
+  totalParts?: string;
   title: string;
   titleZh: string;
   pageTitle?: string;
@@ -22,16 +24,25 @@ interface Props {
   descriptionZh: string;
   image: string;
   imageAlt: string;
+  imageAspect?: number;
+  imageWidth?: number;
   background: string;
   foreground: string;
   accent: string;
+  heroBackground?: string;
+  heroForeground?: string;
+  heroAccent?: string;
+  heroOutline?: string;
   meta: MetaItem[];
   nextHref: string;
   nextTitle: string;
   nextTitleZh: string;
   nextImage: string;
+  nextImageAspect?: number;
+  nextImageWidth?: number;
   nextBackground: string;
   nextAccent: string;
+  nextRail?: string;
   imagePosition?: string;
   titleLeft?: string;
   titleLeftZh?: string;
@@ -42,6 +53,7 @@ interface Props {
 
 const {
   part,
+  totalParts = "05",
   title,
   titleZh,
   pageTitle,
@@ -54,16 +66,25 @@ const {
   descriptionZh,
   image,
   imageAlt,
+  imageAspect = 1366 / 844,
+  imageWidth,
   background,
   foreground,
   accent,
+  heroBackground = background,
+  heroForeground = foreground,
+  heroAccent = accent,
+  heroOutline = heroForeground,
   meta,
   nextHref,
   nextTitle,
   nextTitleZh,
   nextImage,
+  nextImageAspect = 1366 / 844,
+  nextImageWidth,
   nextBackground,
   nextAccent,
+  nextRail = nextAccent,
   imagePosition = "center",
   titleLeft = "8%",
   titleLeftZh = titleLeft,
@@ -72,6 +93,12 @@ const {
   outlineHeroTitle = true,
 } = Astro.props;
 const titleWords = title.trim().split(/\s+/);
+const detailMediaWidth = imageWidth ?? Math.min(52, 33.75 * imageAspect);
+const detailMediaHeight = detailMediaWidth / imageAspect;
+const detailMediaTop = (56.25 - detailMediaHeight) / 2;
+const detailMediaSide = (100 - detailMediaWidth) / 2;
+const nextMediaWidth = nextImageWidth ?? Math.min(52, 33.75 * nextImageAspect);
+const nextMediaHeight = nextMediaWidth / nextImageAspect;
 ---
 
 <BaseLayout
@@ -81,19 +108,20 @@ const titleWords = title.trim().split(/\s+/);
   titleZh={pageTitleZh ?? titleZh}
   description={description}
   descriptionZh={descriptionZh}
-  detailBackground={background}
-  detailForeground={foreground}
-  detailAccent={accent}
+  detailBackground={heroBackground}
+  detailForeground={heroForeground}
+  detailAccent={heroAccent}
+  detailReturnColor={heroBackground}
 >
   <article
     class="part-detail"
     data-part-detail
-    style={`--detail-bg:${background};--detail-fg:${foreground};--detail-accent:${accent};--detail-image-position:${imagePosition};--detail-title-left:${titleLeft};--detail-title-left-zh:${titleLeftZh};`}
+    style={`--detail-bg:${background};--detail-fg:${foreground};--detail-accent:${accent};--detail-hero-bg:${heroBackground};--detail-hero-fg:${heroForeground};--detail-hero-accent:${heroAccent};--detail-hero-outline:${heroOutline};--detail-image-position:${imagePosition};--detail-image-aspect:${imageAspect};--detail-media-width:${detailMediaWidth}cqw;--detail-media-height:${detailMediaHeight}cqw;--detail-media-top:${detailMediaTop}cqw;--detail-media-side:${detailMediaSide}cqw;--detail-title-left:${titleLeft};--detail-title-left-zh:${titleLeftZh};`}
   >
     <section class="detail-hero" aria-labelledby="detail-title">
-      <div class="detail-hero-stage">
+      <div class="detail-hero-stage" style={`--detail-stage-height-limit:${50.5 / detailMediaHeight * 100}svh`}>
         <div class="detail-hero-copy">
-          <p class="detail-part">{part} / 04</p>
+          <p class="detail-part">{part} / {totalParts}</p>
           <p class="detail-eyebrow">
             <span class="en-text">{eyebrow}</span>
             <span class="zh-text">{eyebrowZh}</span>
@@ -122,7 +150,7 @@ const titleWords = title.trim().split(/\s+/);
         {outlineHeroTitle && showHeroTitle && (
           <div class="detail-title-mask" aria-hidden="true">
             <div class="detail-hero-copy detail-hero-copy--mask">
-              <p class="detail-part">{part} / 04</p>
+              <p class="detail-part">{part} / {totalParts}</p>
               <p class="detail-eyebrow">
                 <span class="en-text">{eyebrow}</span>
                 <span class="zh-text">{eyebrowZh}</span>
@@ -145,11 +173,7 @@ const titleWords = title.trim().split(/\s+/);
           </div>
         )}
       </div>
-      <p class="detail-scroll-cue" aria-hidden="true">
-        <span class="en-text">Scroll to explore</span>
-        <span class="zh-text">向下继续</span>
-        <span>↓</span>
-      </p>
+      <DetailScrollCue />
     </section>
 
     {showOverview && (
@@ -193,35 +217,45 @@ const titleWords = title.trim().split(/\s+/);
 
     <section
       class="detail-next"
+      id="next-part"
       data-detail-next
-      style={`--next-bg:${nextBackground};--next-accent:${nextAccent};--next-image:url('${nextImage}');`}
+      style={`--next-bg:${nextBackground};--next-accent:${nextAccent};--next-media-width:${nextMediaWidth}cqw;--next-media-height:${nextMediaHeight}cqw;--next-aspect:${nextImageAspect};`}
     >
       <a
         href={nextHref}
-        data-transition-link
+        data-next-part-link
         data-transition-color={nextBackground}
+        data-transition-accent={nextRail}
         data-transition-image={nextImage}
+        data-transition-aspect={nextImageAspect}
         aria-label={`Continue to ${nextTitle}`}
       >
-        <span class="detail-next-kicker">
-          <span class="en-text">Keep scrolling or click for the next part</span>
-          <span class="zh-text">继续滚动或点击进入下一部分</span>
-        </span>
-        <span class="detail-next-title">
-          <span class="en-text">{nextTitle}</span>
-          <span class="zh-text">{nextTitleZh}</span>
-        </span>
-        <span class="detail-next-arrow" aria-hidden="true">→</span>
+        <span class="detail-next-progress" aria-hidden="true"></span>
+        <span class="detail-next-kicker"><span class="en-text">Next part</span><span class="zh-text">下一部分</span></span>
+        <div class="detail-next-stage" style={`--detail-stage-height-limit:${50.5 / nextMediaHeight * 100}svh`}>
+          <div class="detail-next-media" data-next-media>
+            <img src={nextImage} alt="" loading="lazy" class="detail-next-monochrome" />
+            <img src={nextImage} alt="" loading="lazy" class="detail-next-color" />
+          </div>
+          <h2 class:list={["detail-next-title", { "detail-next-title--compound": nextTitle.includes(" ") }]}>
+            <span class="en-text">{nextTitle}</span><span class="zh-text">{nextTitleZh}</span>
+          </h2>
+          <div class="detail-next-outline-clip" aria-hidden="true">
+            <div class:list={["detail-next-title", "detail-next-title--outline", { "detail-next-title--compound": nextTitle.includes(" ") }]}>
+              <span class="en-text">{nextTitle}</span><span class="zh-text">{nextTitleZh}</span>
+            </div>
+          </div>
+        </div>
       </a>
     </section>
   </article>
 </BaseLayout>
 
 <script>
+  import "../scripts/detail-next";
   let detailController: AbortController | undefined;
   let detailObserver: IntersectionObserver | undefined;
   let detailEnterFrame = 0;
-  let nextWheelTimer = 0;
 
   function stopPartDetail() {
     detailController?.abort();
@@ -229,7 +263,6 @@ const titleWords = title.trim().split(/\s+/);
     detailObserver?.disconnect();
     detailObserver = undefined;
     window.cancelAnimationFrame(detailEnterFrame);
-    window.clearTimeout(nextWheelTimer);
     document.documentElement.classList.remove("part-detail-active");
   }
 
@@ -243,10 +276,7 @@ const titleWords = title.trim().split(/\s+/);
     const revealElements = Array.from(
       detailPage.querySelectorAll<HTMLElement>("[data-detail-reveal]"),
     );
-    const nextSection = detailPage.querySelector<HTMLElement>("[data-detail-next]");
-    const nextLink = nextSection?.querySelector<HTMLAnchorElement>("a");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let nextWheel = 0;
 
     document.documentElement.classList.add("part-detail-active");
     detailEnterFrame = requestAnimationFrame(() => {
@@ -267,20 +297,6 @@ const titleWords = title.trim().split(/\s+/);
       revealElements.forEach((element) => element.classList.add("detail-visible"));
     }
 
-    window.addEventListener("wheel", (event) => {
-      if (!nextSection || !nextLink || reducedMotion.matches || event.deltaY <= 0) return;
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 3;
-      if (!atBottom) {
-        nextWheel = 0;
-        return;
-      }
-      nextWheel += event.deltaY;
-      window.clearTimeout(nextWheelTimer);
-      nextWheelTimer = window.setTimeout(() => (nextWheel = 0), 280);
-      if (nextWheel < 520) return;
-      nextWheel = 0;
-      nextLink.click();
-    }, { passive: true, signal });
   }
 
   document.addEventListener("astro:page-load", initializePartDetail);

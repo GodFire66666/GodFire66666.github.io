@@ -4,9 +4,6 @@ import { SITE } from "../config";
 import { featuredProject } from "../data/projects";
 import { xiaohongshuPosts } from "../data/xiaohongshu";
 
-const notesCover = xiaohongshuPosts.find(
-  (post) => post.id === "6a803b2c0000000026034f93",
-);
 const scenes = [
   {
     id: "yucong",
@@ -22,17 +19,83 @@ const scenes = [
     action: "Meet Yucong",
     actionZh: "认识 Yucong",
     image: "/hero-portrait-centered.jpg",
+    detailAspect: 1596 / 986,
+    detailWidth: undefined,
     imageAlt: "Portrait of Yucong Luo in a black sweater",
     background: "#3d4545",
     foreground: "#f0ece5",
-    titleColor: "#f5f0e8",
-    accent: "#d8a48b",
+    titleColor: "#c7b8b1",
+    accent: "#c7b8b1",
+    rail: "#c7b8b1",
     brightness: 1,
     scale: 1,
     rotation: 0,
     mobileX: 0,
     focusX: 0.5,
     focusY: 0.5,
+    detailPosition: "center 58%",
+    theme: "dark",
+  },
+  {
+    id: "photography",
+    eyebrow: "Model Studies · 2021–2022",
+    eyebrowZh: "模型习作 · 2021–2022",
+    title: "Model Photography",
+    titleZh: "模型摄影",
+    description:
+      "An archive of Gundam, Transformers, character figures, and small worlds shaped through posing and light.",
+    descriptionZh:
+      "高达、变形金刚与角色模型的摄影存档，用姿态和光线塑造微小世界。",
+    href: "/photography/",
+    action: "Enter the archive",
+    actionZh: "进入作品档案",
+    image: "/photography/rg-hi-nu/gallery/13.webp",
+    detailAspect: 1600 / 1067,
+    detailWidth: undefined,
+    imageAlt: "RG Hi-Nu Gundam photographed against a dark background",
+    background: "#172536",
+    foreground: "#eef2f1",
+    titleColor: "#88b2cf",
+    accent: "#88b2cf",
+    rail: "#88b2cf",
+    brightness: 1.08,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.46,
+    focusY: 0.46,
+    detailPosition: "center",
+    theme: "dark",
+  },
+  {
+    id: "notes",
+    eyebrow: `${xiaohongshuPosts.length} Notes from Elsewhere`,
+    eyebrowZh: `${xiaohongshuPosts.length} 篇站外随笔`,
+    title: "Notes",
+    titleZh: "随笔",
+    description:
+      "Fragments about feeling, relationships, music, games, and the ordinary days worth remembering.",
+    descriptionZh:
+      "关于情感、关系、音乐、游戏，以及那些值得被记住的普通日子的片段。",
+    href: "/notes/",
+    action: "Browse all notes",
+    actionZh: "浏览全部随笔",
+    image: "/notes/pampas-clouds-cover.png",
+    detailAspect: 1448 / 1086,
+    detailWidth: 52,
+    imageAlt: "Pampas grass beneath bright summer clouds",
+    background: "#326b7e",
+    foreground: "#f6f2e8",
+    titleColor: "#f0d09a",
+    accent: "#f0d09a",
+    rail: "#f0d09a",
+    brightness: 1,
+    scale: 1,
+    rotation: 0,
+    mobileX: 0,
+    focusX: 0.5,
+    focusY: 0.5,
+    detailPosition: "center",
     theme: "dark",
   },
   {
@@ -51,49 +114,24 @@ const scenes = [
     action: "Open the experience",
     actionZh: "进入体验",
     image: featuredProject?.image ?? "/projects/yucongs-tarot.jpg",
+    detailAspect: 1874 / 1035,
+    detailWidth: undefined,
     imageAlt:
       featuredProject?.imageAlt ?? "The dark interface of Quiet Tarot",
     background: "#221e34",
     foreground: "#eee9df",
-    titleColor: "#f3ead7",
-    accent: "#d6b35f",
+    titleColor: "#b6a3a5",
+    accent: "#b6a3a5",
+    rail: "#b6a3a5",
     brightness: 1.3,
     scale: 1,
     rotation: 0,
     mobileX: 0,
     focusX: 0.5,
     focusY: 0.5,
+    detailPosition: "center",
     theme: "dark",
     external: false,
-  },
-  {
-    id: "notes",
-    eyebrow: `${xiaohongshuPosts.length} Notes from Elsewhere`,
-    eyebrowZh: `${xiaohongshuPosts.length} 篇站外随笔`,
-    title: "Notes",
-    titleZh: "随笔",
-    description:
-      "Fragments about feeling, relationships, music, games, and the ordinary days worth remembering.",
-    descriptionZh:
-      "关于情感、关系、音乐、游戏，以及那些值得被记住的普通日子的片段。",
-    href: "/notes/",
-    action: "Browse all notes",
-    actionZh: "浏览全部随笔",
-    image:
-      notesCover?.images[0] ??
-      "/xiaohongshu/6a803b2c0000000026034f93/images/01.webp",
-    imageAlt: notesCover?.title ?? "Sunset note titled Lose yourself to find yourself",
-    background: "#dfeadf",
-    foreground: "#294139",
-    titleColor: "#174b34",
-    accent: "#a96257",
-    brightness: 1,
-    scale: 1,
-    rotation: 0,
-    mobileX: 0,
-    focusX: 0.5,
-    focusY: 0.31,
-    theme: "light",
   },
   {
     id: "writing",
@@ -109,17 +147,21 @@ const scenes = [
     action: "Start reading",
     actionZh: "开始阅读",
     image: "/projects/writing-cover.webp",
+    detailAspect: 4 / 3,
+    detailWidth: undefined,
     imageAlt: "Editorial cover for Yucong Luo's long-form writing",
     background: "#eee4e7",
     foreground: "#49343b",
-    titleColor: "#4d2936",
-    accent: "#a04f6a",
+    titleColor: "#91445e",
+    accent: "#91445e",
+    rail: "#91445e",
     brightness: 1,
     scale: 1,
     rotation: 0,
     mobileX: 0,
     focusX: 0.5,
     focusY: 0.5,
+    detailPosition: "center",
     theme: "light",
   },
 ];
@@ -129,7 +171,7 @@ const scenes = [
   <div
     class="portfolio-home"
     data-portfolio-home
-    style={`--portfolio-bg: ${scenes[0].background}; --portfolio-fg: ${scenes[0].foreground}; --portfolio-title: ${scenes[0].titleColor}; --portfolio-accent: ${scenes[0].accent};`}
+    style={`--portfolio-bg: ${scenes[0].background}; --portfolio-fg: ${scenes[0].foreground}; --portfolio-title: ${scenes[0].titleColor}; --portfolio-accent: ${scenes[0].accent}; --portfolio-rail: ${scenes[0].rail};`}
   >
     <div class="portfolio-backdrop" aria-hidden="true"></div>
     <canvas class="portfolio-canvas" data-portfolio-canvas aria-hidden="true"></canvas>
@@ -166,14 +208,19 @@ const scenes = [
           data-scene-image={scene.image}
           data-scene-background={scene.background}
           data-scene-foreground={scene.foreground}
+          data-scene-detail-foreground={scene.id === "notes" ? "#111719" : scene.id === "photography" ? "#172536" : "#ffffff"}
           data-scene-title={scene.titleColor}
           data-scene-accent={scene.accent}
+          data-scene-rail={scene.rail}
           data-scene-brightness={scene.brightness}
           data-scene-scale={scene.scale}
           data-scene-rotation={scene.rotation}
           data-scene-mobile-x={scene.mobileX}
           data-scene-focus-x={scene.focusX}
           data-scene-focus-y={scene.focusY}
+          data-scene-detail-position={scene.detailPosition}
+          data-scene-detail-aspect={scene.detailAspect}
+          data-scene-detail-width={scene.detailWidth}
           data-scene-href={scene.href}
           data-scene-external={scene.external ? "true" : "false"}
           data-scene-theme={scene.theme}
@@ -204,7 +251,11 @@ const scenes = [
                 href={scene.href}
                 data-transition-link={!scene.external ? true : undefined}
                 data-transition-color={!scene.external ? scene.background : undefined}
+                data-transition-accent={!scene.external ? scene.rail : undefined}
                 data-transition-image={!scene.external ? scene.image : undefined}
+                data-transition-position={!scene.external ? scene.detailPosition : undefined}
+                data-transition-aspect={!scene.external ? scene.detailAspect : undefined}
+                data-transition-width={!scene.external ? scene.detailWidth : undefined}
                 target={scene.external ? "_blank" : undefined}
                 rel={scene.external ? "noreferrer" : undefined}
               >
@@ -269,6 +320,7 @@ const scenes = [
       home.style.setProperty("--portfolio-fg", target.dataset.sceneForeground);
       home.style.setProperty("--portfolio-title", target.dataset.sceneTitle);
       home.style.setProperty("--portfolio-accent", target.dataset.sceneAccent);
+      home.style.setProperty("--portfolio-rail", target.dataset.sceneRail);
       document.documentElement.classList.toggle(
         "portfolio-theme-light",
         target.dataset.sceneTheme === "light",
@@ -383,6 +435,7 @@ const scenes = [
       portfolioHome.style.setProperty("--portfolio-fg", next.dataset.sceneForeground ?? "#f6f3ed");
       portfolioHome.style.setProperty("--portfolio-title", next.dataset.sceneTitle ?? "#f6f3ed");
       portfolioHome.style.setProperty("--portfolio-accent", next.dataset.sceneAccent ?? "#efb39f");
+      portfolioHome.style.setProperty("--portfolio-rail", next.dataset.sceneRail ?? next.dataset.sceneAccent ?? "#efb39f");
       document.documentElement.classList.toggle(
         "portfolio-theme-light",
         next.dataset.sceneTheme === "light",

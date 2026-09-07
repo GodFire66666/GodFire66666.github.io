@@ -21,9 +21,13 @@ type ReelGroup = Group & {
     baseHeight: number;
     baseWidth: number;
     brightness: number;
+    cropUvOffset: Vector2;
+    cropUvScale: Vector2;
     focusX: number;
     focusY: number;
     href: string;
+    imageAspect: number;
+    imageWidth?: number;
     material: ShaderMaterial;
     mobileX: number;
     opensExternally: boolean;
@@ -48,9 +52,11 @@ const FRAME_ASPECT = 1366 / 844;
 const DESKTOP_FRAME_ASPECT = FRAME_ASPECT / 1.06;
 const WHEEL_FRICTION = 0.0023;
 const WHEEL_IDLE_MS = 150;
+const WHEEL_RELEASE_MS = 360;
 const SPRING_MASS = 2.5;
 const SPRING_TENSION = 80;
 const SPRING_FRICTION = 24;
+const ROUTE_TRANSITION_MS = 900;
 
 let stopActiveReel: (() => void) | undefined;
 
@@ -91,6 +97,7 @@ const fragmentShader = `
   uniform vec2 uUvScale;
   uniform float uDistance;
   uniform float uBrightness;
+  uniform float uFrameZoom;
   uniform float uOpacity;
   varying vec2 vUv;
 
@@ -115,7 +122,7 @@ const fragmentShader = `
 
   void main() {
     float distanceFromCenter = min(abs(uDistance), 1.0);
-    float photoScale = 1.05 + 0.11 * distanceFromCenter;
+    float photoScale = 1.0 + (0.05 + 0.11 * distanceFromCenter) * uFrameZoom;
     vec2 uv = scaleUv(vUv, photoScale);
     uv = uv * uUvScale + uUvOffset;
 
@@ -145,6 +152,9 @@ export async function startPortfolioReel() {
     ? Array.from(home.querySelectorAll<HTMLElement>("[data-scene-index]"))
     : [];
   const progressNav = home?.querySelector<HTMLElement>(".portfolio-progress");
+  const progressLinks = home
+    ? Array.from(home.querySelectorAll<HTMLAnchorElement>(".portfolio-progress a"))
+    : [];
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   if (!home || !canvas || sceneElements.length === 0 || reducedMotion.matches)
@@ -152,6 +162,27 @@ export async function startPortfolioReel() {
 
   const controller = new AbortController();
   const { signal } = controller;
+
+  function syncProgressBarWidths() {
+    progressLinks.forEach((link) => {
+      const label = link.querySelector<HTMLElement>(".portfolio-progress-label");
+      if (!label) return;
+      const labelWidth = label.getBoundingClientRect().width;
+      link.style.setProperty(
+        "--progress-label-width",
+        `${labelWidth.toFixed(2)}px`,
+      );
+    });
+  }
+
+  syncProgressBarWidths();
+  void document.fonts.ready.then(() => {
+    if (!signal.aborted) syncProgressBarWidths();
+  });
+  window.addEventListener("site-language-change", syncProgressBarWidths, {
+    signal,
+  });
+  window.addEventListener("resize", syncProgressBarWidths, { signal });
 
   const startsOnMobile = window.innerWidth <= MOBILE_BREAKPOINT;
   const geometry = new PlaneGeometry(
@@ -171,6 +202,7 @@ export async function startPortfolioReel() {
 
   let animationFrame = 0;
   let wheelIdleTimer = 0;
+  let wheelReleaseTimer = 0;
   let timer: Timer | undefined;
   let textures: Texture[] = [];
   let groups: ReelGroup[] = [];
@@ -181,18 +213,37 @@ export async function startPortfolioReel() {
     stopped = true;
     controller.abort();
     window.clearTimeout(wheelIdleTimer);
+    window.clearTimeout(wheelReleaseTimer);
     window.cancelAnimationFrame(animationFrame);
     timer?.disconnect();
-    groups.forEach((group) => group.userData.material.dispose());
-    textures.forEach((texture) => texture.dispose());
-    geometry.dispose();
-    renderer.dispose();
     home.classList.remove(
       "webgl-ready",
       "reel-card-hovered",
       "portfolio-navigation-preview",
     );
     if (stopActiveReel === cleanup) stopActiveReel = undefined;
+
+    // Releasing several textures and the WebGL renderer can block the exact
+    // frame in which Astro swaps the page. The canvas is already detached, so
+    // dispose the GPU resources after the route transition has settled.
+    const disposeResources = () => {
+      groups.forEach((group) => group.userData.material.dispose());
+      textures.forEach((texture) => texture.dispose());
+      geometry.dispose();
+      renderer.dispose();
+    };
+    const requestIdle = (
+      window as Window & {
+        requestIdleCallback?: (
+          callback: IdleRequestCallback,
+          options?: IdleRequestOptions,
+        ) => number;
+      }
+    ).requestIdleCallback;
+    setTimeout(() => {
+      if (requestIdle) requestIdle(disposeResources, { timeout: 1200 });
+      else disposeResources();
+    }, 240);
   };
   stopActiveReel = cleanup;
 
@@ -225,6 +276,7 @@ export async function startPortfolioReel() {
 
   groups = textures.map((texture, index) => {
     const scene = sceneElements[index];
+    const textureImage = texture.image as { height: number; width: number };
     const material = new ShaderMaterial({
       uniforms: {
         uTexture: { value: texture },
@@ -234,6 +286,7 @@ export async function startPortfolioReel() {
         uUvScale: { value: new Vector2(1, 1) },
         uDistance: { value: 0 },
         uBrightness: { value: Number(scene?.dataset.sceneBrightness ?? "1") },
+        uFrameZoom: { value: 1 },
         uOpacity: { value: 0 },
         uTime: { value: 0 },
         uBend: { value: startsOnMobile ? 0.01 : 0.021 },
@@ -252,9 +305,13 @@ export async function startPortfolioReel() {
       baseHeight: 1,
       baseWidth: 1,
       brightness: Number(scene?.dataset.sceneBrightness ?? "1"),
+      cropUvOffset: new Vector2(),
+      cropUvScale: new Vector2(1, 1),
       focusX: Number(scene?.dataset.sceneFocusX ?? "0.5"),
       focusY: Number(scene?.dataset.sceneFocusY ?? "0.5"),
       href: scene?.dataset.sceneHref ?? "",
+      imageAspect: textureImage.width / textureImage.height,
+      imageWidth: Number(scene?.dataset.sceneDetailWidth) || undefined,
       material,
       mobileX: Number(scene?.dataset.sceneMobileX ?? "0"),
       opensExternally: scene?.dataset.sceneExternal === "true",
@@ -281,6 +338,8 @@ export async function startPortfolioReel() {
   let renderedProgress = initialIndex;
   let springVelocity = 0;
   let wheelAccumulator = 0;
+  let wheelInputLocked = false;
+  let settledWheelDirection = 0;
   let visibleHeight = 1;
   let visibleWidth = 1;
   let desktopStep = 1;
@@ -289,6 +348,11 @@ export async function startPortfolioReel() {
   let mobileTransitionStartedAt = 0;
   let navigationPreview = false;
   let navigationPreviewMix = 0;
+  let routeTransitionActive = false;
+  let routeTransitionDispatched = false;
+  let routeTransitionReadyForNavigation = false;
+  let routeTransitionStartedAt = 0;
+  let routeTransitionMix = 0;
   let firstFrameRendered = false;
 
   function isMobile() {
@@ -355,6 +419,8 @@ export async function startPortfolioReel() {
         Math.min(1 - uvScale.y, group.userData.focusY - uvScale.y / 2),
       ),
     );
+    group.userData.cropUvScale.copy(uvScale);
+    group.userData.cropUvOffset.copy(uvOffset);
   }
 
   function applyDesktopGroups(progress: number) {
@@ -420,7 +486,7 @@ export async function startPortfolioReel() {
     else applyDesktopGroups(progress);
   }
 
-  function applyReelStageLayout(previewMix: number) {
+  function applyReelStageLayout(previewMix: number, routeMix = 0) {
     if (isMobile()) {
       reelStage.position.set(0, 0, 0);
       reelStage.rotation.set(0, 0, 0);
@@ -428,17 +494,104 @@ export async function startPortfolioReel() {
       return;
     }
 
+    const startX = visibleWidth * 0.17 * (1 - previewMix);
+    const startY = -visibleHeight * 0.01 * (1 - previewMix);
+    const startRotationX = -0.18 - 0.14 * previewMix;
+    const startRotationY = -0.25 + 0.21 * previewMix;
+    const startRotationZ = -0.06 + 0.04 * previewMix;
+    const startScale = 1 + 0.08 * previewMix;
+    const targetZ = 0.3;
+    const targetStageWidthPx = Math.min(
+      window.innerWidth,
+      window.innerHeight * (16 / 9),
+      1846.154,
+    );
+    const targetStageHeightPx = targetStageWidthPx * (9 / 16);
+    const targetStageLeftPx = (window.innerWidth - targetStageWidthPx) / 2;
+    const targetStageTopPx = (window.innerHeight - targetStageHeightPx) / 2;
+    const activeGroup = groups[modulo(committedVirtualIndex)] ?? groups[0];
+    const targetImageAspect = activeGroup?.userData.imageAspect
+      ?? DESKTOP_FRAME_ASPECT;
+    const targetFrameWidthPx = activeGroup?.userData.imageWidth
+      ? targetStageWidthPx * activeGroup.userData.imageWidth / 100
+      : Math.min(
+        targetStageWidthPx * 0.52,
+        targetStageHeightPx * 0.6 * targetImageAspect,
+      );
+    const targetFrameHeightPx = targetFrameWidthPx / targetImageAspect;
+    const targetCenterXPx =
+      targetStageLeftPx + (targetStageWidthPx - targetFrameWidthPx) / 2
+      + targetFrameWidthPx / 2;
+    const targetCenterYPx =
+      targetStageTopPx + (targetStageHeightPx - targetFrameHeightPx) / 2
+      + targetFrameHeightPx / 2;
+    const depthRatio = (camera.position.z - targetZ) / camera.position.z;
+    const targetVisibleWidth = visibleWidth * depthRatio;
+    const targetVisibleHeight =
+      visibleHeight * depthRatio;
+    const targetX =
+      (targetCenterXPx - window.innerWidth / 2) /
+      window.innerWidth * targetVisibleWidth;
+    const targetY =
+      -(targetCenterYPx - window.innerHeight / 2) /
+      window.innerHeight * targetVisibleHeight;
+    const targetScaleX = activeGroup
+      ? targetVisibleWidth * (targetFrameWidthPx / window.innerWidth)
+        / activeGroup.userData.baseWidth
+      : 1.17;
+    const targetScaleY = activeGroup
+      ? targetVisibleHeight * (targetFrameHeightPx / window.innerHeight)
+        / activeGroup.userData.baseHeight
+      : 1.17;
+
     reelStage.position.set(
-      visibleWidth * 0.17 * (1 - previewMix),
-      -visibleHeight * 0.01 * (1 - previewMix),
-      0.3,
+      startX + (targetX - startX) * routeMix,
+      startY + (targetY - startY) * routeMix,
+      targetZ,
     );
     reelStage.rotation.set(
-      -0.18 - 0.14 * previewMix,
-      -0.25 + 0.21 * previewMix,
-      -0.06 + 0.04 * previewMix,
+      startRotationX * (1 - routeMix),
+      startRotationY * (1 - routeMix),
+      startRotationZ * (1 - routeMix),
     );
-    reelStage.scale.setScalar(1 + 0.08 * previewMix);
+    reelStage.scale.set(
+      startScale + (targetScaleX - startScale) * routeMix,
+      startScale + (targetScaleY - startScale) * routeMix,
+      1,
+    );
+  }
+
+  function applyRouteTransition() {
+    if (!routeTransitionActive || isMobile()) return;
+    const activeIndex = modulo(committedVirtualIndex);
+    groups.forEach((group, groupIndex) => {
+      const isActive = groupIndex === activeIndex;
+      const material = group.userData.material;
+      if (isActive) {
+        const uvScale = material.uniforms.uUvScale.value as Vector2;
+        const uvOffset = material.uniforms.uUvOffset.value as Vector2;
+        uvScale.set(
+          group.userData.cropUvScale.x
+            + (1 - group.userData.cropUvScale.x) * routeTransitionMix,
+          group.userData.cropUvScale.y
+            + (1 - group.userData.cropUvScale.y) * routeTransitionMix,
+        );
+        uvOffset.set(
+          group.userData.cropUvOffset.x * (1 - routeTransitionMix),
+          group.userData.cropUvOffset.y * (1 - routeTransitionMix),
+        );
+        group.visible = true;
+        group.rotation.z = -0.015 * (1 - routeTransitionMix);
+        material.uniforms.uDistance.value = 0;
+        material.uniforms.uFrameZoom.value = 1 - routeTransitionMix;
+        material.uniforms.uOpacity.value = 1;
+        material.uniforms.uBend.value = 0.021 * (1 - routeTransitionMix);
+        material.uniforms.uFloating.value = 1 - routeTransitionMix;
+      } else {
+        material.uniforms.uOpacity.value *= 1 - routeTransitionMix;
+        if (routeTransitionMix > 0.98) group.visible = false;
+      }
+    });
   }
 
   function resize() {
@@ -474,7 +627,7 @@ export async function startPortfolioReel() {
     if (!mobile) {
       desktopStep = groups[0].userData.baseHeight * 1.02;
     }
-    applyReelStageLayout(navigationPreviewMix);
+    applyReelStageLayout(navigationPreviewMix, routeTransitionMix);
 
     groups.forEach((group) => {
       const resolution = group.userData.material.uniforms.uResolution
@@ -510,6 +663,10 @@ export async function startPortfolioReel() {
     committedVirtualIndex = virtualTarget;
     targetProgress = virtualTarget;
     wheelAccumulator = 0;
+    wheelInputLocked = false;
+    settledWheelDirection = 0;
+    window.clearTimeout(wheelIdleTimer);
+    window.clearTimeout(wheelReleaseTimer);
     if (immediate) {
       renderedProgress = virtualTarget;
       springVelocity = 0;
@@ -526,6 +683,22 @@ export async function startPortfolioReel() {
     return delta;
   }
 
+  function releaseWheelInput() {
+    wheelInputLocked = false;
+    settledWheelDirection = 0;
+    wheelReleaseTimer = 0;
+  }
+
+  function holdWheelInput(direction: number) {
+    wheelInputLocked = true;
+    settledWheelDirection = direction;
+    window.clearTimeout(wheelReleaseTimer);
+    wheelReleaseTimer = window.setTimeout(
+      releaseWheelInput,
+      WHEEL_RELEASE_MS,
+    );
+  }
+
   function settleWheelGesture() {
     const direction = Math.sign(wheelAccumulator);
     if (direction === 0 || Math.abs(wheelAccumulator) < 0.025) {
@@ -535,17 +708,19 @@ export async function startPortfolioReel() {
     }
 
     const steps = Math.min(
-      groups.length - 1,
+      3,
       Math.max(1, Math.round(Math.abs(wheelAccumulator))),
     );
     committedVirtualIndex += direction * steps;
     wheelAccumulator = 0;
     targetProgress = committedVirtualIndex;
+    holdWheelInput(direction);
     dispatchSceneChange(committedVirtualIndex, direction);
   }
 
   function handleWheel(event: WheelEvent) {
     if (
+      routeTransitionActive ||
       isMobile() ||
       event.ctrlKey ||
       Math.abs(event.deltaY) <= Math.abs(event.deltaX)
@@ -555,6 +730,14 @@ export async function startPortfolioReel() {
 
     const delta = normalizeWheelDelta(event);
     if (Math.abs(delta) < 0.2) return;
+    const direction = Math.sign(delta);
+    if (wheelInputLocked) {
+      if (direction === settledWheelDirection) {
+        holdWheelInput(direction);
+        return;
+      }
+      releaseWheelInput();
+    }
     const maximumTravel = groups.length - 1 + 0.35;
     wheelAccumulator = Math.max(
       -maximumTravel,
@@ -602,25 +785,61 @@ export async function startPortfolioReel() {
     );
   }
 
-  function openActiveCard() {
+  function beginRouteTransition(clientX?: number, clientY?: number) {
+    if (routeTransitionActive || isMobile()) return false;
     const activeGroup = groups[modulo(committedVirtualIndex)];
     const { href, opensExternally } = activeGroup.userData;
-    if (!href) return;
+    if (!href) return false;
     if (opensExternally) {
       window.open(href, "_blank", "noopener,noreferrer");
-      return;
+      return true;
     }
+
+    if (typeof clientX === "number" && typeof clientY === "number") {
+      pointer.set(clientX, clientY);
+    }
+    renderedProgress = committedVirtualIndex;
+    targetProgress = committedVirtualIndex;
+    springVelocity = 0;
+    wheelAccumulator = 0;
+    navigationPreview = false;
+    navigationPreviewMix = 0;
+
+    // The return transition reuses this exact canvas frame. Render the reel at
+    // its committed index before it is captured so a still-moving neighbour
+    // can never become the cached Back preview.
+    applyReelStageLayout(0, 0);
+    applyGroups(renderedProgress);
+    renderer.render(webglScene, camera);
+
+    routeTransitionActive = true;
+    routeTransitionStartedAt = performance.now();
+    home?.classList.remove("portfolio-navigation-preview");
+    home?.classList.add("portfolio-card-opening", "reel-card-hovered");
+    home?.setAttribute("aria-busy", "true");
+
+    const transitionLayer = document.getElementById("route-transition-layer");
+    if (transitionLayer && canvas) {
+      canvas.classList.add("portfolio-canvas--transition");
+      transitionLayer.append(canvas);
+    }
+
     const activeScene = sceneElements[modulo(committedVirtualIndex)];
     window.dispatchEvent(
-      new CustomEvent("site-transition-navigate", {
+      new CustomEvent("site-transition-prepare", {
         detail: {
           href,
+          accent: activeScene?.dataset.sceneRail ?? activeScene?.dataset.sceneAccent,
           color: activeScene?.dataset.sceneBackground ?? "#111214",
           sceneId: activeScene?.id,
           image: activeScene?.dataset.sceneImage,
+          imageAspect: activeGroup.userData.imageAspect,
+          imageWidth: activeGroup.userData.imageWidth,
+          imagePosition: activeScene?.dataset.sceneDetailPosition,
         },
       }),
     );
+    return true;
   }
 
   function setNavigationPreview(active: boolean) {
@@ -632,11 +851,18 @@ export async function startPortfolioReel() {
   progressNav?.addEventListener("pointerenter", () => {
     setNavigationPreview(true);
   }, { signal });
+
+  progressLinks.forEach((link, index) => {
+    link.addEventListener("pointerenter", () => {
+      setNavigationPreview(true);
+      goToIndex(index);
+    }, { signal });
+    link.addEventListener("focus", () => {
+      setNavigationPreview(true);
+    }, { signal });
+  });
   progressNav?.addEventListener("pointerleave", () => {
     setNavigationPreview(false);
-  }, { signal });
-  progressNav?.addEventListener("focusin", () => {
-    setNavigationPreview(true);
   }, { signal });
   progressNav?.addEventListener("focusout", () => {
     window.setTimeout(() => {
@@ -651,6 +877,7 @@ export async function startPortfolioReel() {
     (event) => {
       if (isMobile()) return;
       pointer.set(event.clientX, event.clientY);
+      if (routeTransitionActive) return;
       home.classList.toggle(
         "reel-card-hovered",
         !isInteractiveTarget(event.target) &&
@@ -660,14 +887,24 @@ export async function startPortfolioReel() {
     { passive: true, signal },
   );
   window.addEventListener("pointerleave", () => {
+    if (routeTransitionActive) return;
     home.classList.remove("reel-card-hovered");
   }, { signal });
   window.addEventListener("click", (event) => {
+    if (routeTransitionActive) return;
     if (isInteractiveTarget(event.target)) return;
     const hit = cardHitAt(event.clientX, event.clientY);
     if (!hit) return;
-    if (hit.distance < 0.5) openActiveCard();
+    if (hit.distance < 0.5) {
+      beginRouteTransition(event.clientX, event.clientY);
+    }
     else goToIndex(hit.groupIndex);
+  }, { signal });
+  window.addEventListener("portfolio-reel-open-request", (event) => {
+    const request = event as CustomEvent<{ clientX?: number; clientY?: number }>;
+    if (beginRouteTransition(request.detail?.clientX, request.detail?.clientY)) {
+      event.preventDefault();
+    }
   }, { signal });
   window.addEventListener("resize", resize, { passive: true, signal });
   window.addEventListener("portfolio-reel-go-to", (event) => {
@@ -735,14 +972,28 @@ export async function startPortfolioReel() {
     }
 
     smoothedPointer.lerp(pointer, 0.055);
+    if (routeTransitionActive) {
+      const rawRouteProgress = Math.min(
+        1,
+        (timestamp - routeTransitionStartedAt) / ROUTE_TRANSITION_MS,
+      );
+      routeTransitionMix = rawRouteProgress < 0.5
+        ? 8 * Math.pow(rawRouteProgress, 4)
+        : 1 - Math.pow(-2 * rawRouteProgress + 2, 4) / 2;
+      // The destination is already loading. Release its DOM swap only once
+      // the persistent card and color wipe fully cover the home page.
+      routeTransitionReadyForNavigation = rawRouteProgress >= 0.84;
+      if (rawRouteProgress >= 1) routeTransitionMix = 1;
+    }
     const previewTarget = navigationPreview ? 1 : 0;
     navigationPreviewMix +=
       (previewTarget - navigationPreviewMix) *
       (1 - Math.exp(-deltaTime * 6.5));
     if (Math.abs(previewTarget - navigationPreviewMix) < 0.0005)
       navigationPreviewMix = previewTarget;
-    applyReelStageLayout(navigationPreviewMix);
+    applyReelStageLayout(navigationPreviewMix, routeTransitionMix);
     applyGroups(renderedProgress);
+    applyRouteTransition();
     groups.forEach((group) => {
       group.userData.material.uniforms.uTime.value = elapsed;
       const materialPointer = group.userData.material.uniforms.uPointer
@@ -750,6 +1001,29 @@ export async function startPortfolioReel() {
       materialPointer.copy(smoothedPointer);
     });
     renderer.render(webglScene, camera);
+    if (
+      routeTransitionActive &&
+      routeTransitionReadyForNavigation &&
+      !routeTransitionDispatched
+    ) {
+      routeTransitionDispatched = true;
+      const activeScene = sceneElements[modulo(committedVirtualIndex)];
+      const activeGroup = groups[modulo(committedVirtualIndex)];
+      window.dispatchEvent(
+        new CustomEvent("site-transition-handoff", {
+          detail: {
+            href: activeGroup.userData.href,
+            accent: activeScene?.dataset.sceneRail ?? activeScene?.dataset.sceneAccent,
+            color: activeScene?.dataset.sceneBackground ?? "#111214",
+            sceneId: activeScene?.id,
+            image: activeScene?.dataset.sceneImage,
+            imageAspect: activeGroup.userData.imageAspect,
+            imageWidth: activeGroup.userData.imageWidth,
+            imagePosition: activeScene?.dataset.sceneDetailPosition,
+          },
+        }),
+      );
+    }
     if (!firstFrameRendered) {
       firstFrameRendered = true;
       window.dispatchEvent(new CustomEvent("portfolio-home-ready", {

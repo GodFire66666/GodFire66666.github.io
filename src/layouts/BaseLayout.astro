@@ -1,5 +1,6 @@
 ---
 import Header from "../components/Header.astro";
+import DetailScrollCue from "../components/DetailScrollCue.astro";
 import { SITE } from "../config";
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
@@ -14,6 +15,7 @@ interface Props {
   detailBackground?: string;
   detailForeground?: string;
   detailAccent?: string;
+  detailReturnColor?: string;
   wide?: boolean;
 }
 
@@ -27,6 +29,7 @@ const {
   detailBackground,
   detailForeground,
   detailAccent,
+  detailReturnColor,
   wide = false,
 } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
@@ -35,7 +38,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={SITE.language} class="lang-en">
+<html
+  lang={SITE.language}
+  class="lang-en"
+  style={detail ? `--detail-bg:${detailBackground};--detail-fg:${detailForeground};--detail-accent:${detailAccent};` : undefined}
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -46,6 +53,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
     <link rel="prefetch" href="/about/" />
     <link rel="prefetch" href="/projects/tarot/" />
+    <link rel="prefetch" href="/photography/" />
     <link rel="prefetch" href="/notes/" />
     <link rel="prefetch" href="/posts/start-writing/" />
     <meta property="og:type" content="website" />
@@ -53,6 +61,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <title>{pageTitle}</title>
+    <script is:inline>
+      // Custom WebGL and route overlays own the visual transition. Let Astro
+      // swap the DOM directly so the native snapshot phase cannot stall them.
+      if ("startViewTransition" in document) {
+        Object.defineProperty(document, "startViewTransition", {
+          configurable: true,
+          writable: true,
+          value: undefined,
+        });
+      }
+    </script>
     <ClientRouter fallback="swap" />
     <script is:inline data-astro-rerun>
       try {
@@ -77,6 +96,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
     <script>
       import { navigate } from "astro:transitions/client";
+      import "../scripts/detail-scroll-cue";
+      import "../scripts/route-loading-cursor";
 
       window.__yucongNavigate = navigate;
     </script>
@@ -94,11 +115,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       transition:persist="route-transition-layer"
       aria-hidden="true"
     ></div>
+    <template id="detail-scroll-cue-template"><DetailScrollCue /></template>
     <div class:list={["page-shell", { "page-shell--immersive": immersive, "page-shell--detail": detail, "page-shell--wide": wide }]}>
       <Header
         overlay={immersive}
         detail={detail}
-        detailReturnColor={detailBackground}
+        detailReturnColor={detailReturnColor ?? detailBackground}
       />
       <main class:list={{ "main--immersive": immersive }}>
         <slot />
@@ -112,6 +134,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       </footer>
     </div>
     <script is:inline data-astro-rerun>
+      (() => {
       window.__yucongTransitionController?.abort();
       const transitionController = new AbortController();
       window.__yucongTransitionController = transitionController;
@@ -121,6 +144,96 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       let routeIsChanging = false;
       let returnRevealTimer = 0;
       let returnReadyFrame = 0;
+      let returnPreviewCaptureTimer = 0;
+      let returnPreviewCaptureGeneration = 0;
+      let routeSwapGate = null;
+      let routeSwapGateTimer = 0;
+
+      function createRouteSwapGate(href) {
+        window.clearTimeout(routeSwapGateTimer);
+        let release;
+        const ready = new Promise((resolve) => {
+          release = resolve;
+        });
+        routeSwapGate = { href, ready, release };
+        routeSwapGateTimer = window.setTimeout(() => {
+          routeSwapGate?.release();
+        }, 1800);
+      }
+
+      function releaseRouteSwapGate(href) {
+        if (!routeSwapGate || routeSwapGate.href !== href) return;
+        window.clearTimeout(routeSwapGateTimer);
+        routeSwapGate.release();
+      }
+
+      function showRouteInAddressBar(url) {
+        if (window.location.href === url.href) return;
+        const currentState = history.state ?? {};
+        const currentIndex = Number(currentState.index);
+        history.pushState(
+          {
+            ...currentState,
+            index: Number.isFinite(currentIndex) ? currentIndex + 1 : 1,
+            scrollX: window.scrollX,
+            scrollY: window.scrollY,
+            yucongEarlyRoute: true,
+          },
+          "",
+          url.href,
+        );
+      }
+
+      function replaceRouteInAddressBar(url) {
+        if (window.location.href === url.href) return;
+        const currentState = history.state ?? {};
+        history.replaceState(
+          {
+            ...currentState,
+            scrollX: window.scrollX,
+            scrollY: window.scrollY,
+            yucongEarlyRoute: true,
+          },
+          "",
+          url.href,
+        );
+      }
+
+      function queueReturnCanvasPreview(sceneId) {
+        if (!sceneId) return;
+        window.clearTimeout(returnPreviewCaptureTimer);
+        const generation = ++returnPreviewCaptureGeneration;
+        returnPreviewCaptureTimer = window.setTimeout(() => {
+          const canvas = document.querySelector("[data-portfolio-canvas]");
+          if (!(canvas instanceof HTMLCanvasElement)) return;
+          canvas.toBlob((blob) => {
+            if (!blob || generation !== returnPreviewCaptureGeneration) return;
+            const previousPreview = window.__yucongReturnCanvasPreview;
+            if (previousPreview?.url) URL.revokeObjectURL(previousPreview.url);
+            window.__yucongReturnCanvasPreview = {
+              sceneId,
+              url: URL.createObjectURL(blob),
+            };
+          }, "image/webp", 0.72);
+        }, 140);
+      }
+
+      function captureReturnCanvasPreview(sceneId) {
+        if (!sceneId) return;
+        window.clearTimeout(returnPreviewCaptureTimer);
+        const generation = ++returnPreviewCaptureGeneration;
+        const canvas = document.querySelector("[data-portfolio-canvas]");
+        if (!(canvas instanceof HTMLCanvasElement)) return;
+        canvas.toBlob((blob) => {
+          if (!blob || generation !== returnPreviewCaptureGeneration) return;
+          const previousPreview = window.__yucongReturnCanvasPreview;
+          if (previousPreview?.url) URL.revokeObjectURL(previousPreview.url);
+          window.__yucongReturnCanvasPreview = {
+            sceneId,
+            url: URL.createObjectURL(blob),
+          };
+        }, "image/webp", 0.72);
+      }
 
       function finishReturnReveal() {
         window.clearTimeout(returnRevealTimer);
@@ -134,39 +247,42 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           );
           return;
         }
-        underlay.remove();
-        document.documentElement.classList.remove(
-          "route-transition-returning",
-          "route-transition-restoring",
-        );
+        if (underlay.classList.contains("route-return-handoff")) return;
+        underlay.classList.add("route-return-handoff");
+        window.setTimeout(() => {
+          underlay.remove();
+          document.documentElement.classList.remove(
+            "route-transition-returning",
+            "route-transition-restoring",
+          );
+        }, 820);
       }
 
-      function handlePortfolioHomeReady(event) {
+      function waitForPortfolioHomeReady(renderedScene, staticMode = false) {
         const requestedScene = window.location.hash.slice(1) || "yucong";
-        const renderedScene = event.detail?.sceneId;
         if (renderedScene && renderedScene !== requestedScene) return;
 
         let stableFrames = 0;
-        const readyNotBefore = performance.now() + 650;
-        const deadline = performance.now() + 1500;
+        const readyNotBefore = performance.now();
+        const deadline = performance.now() + 1400;
         const waitForSettledHome = () => {
           const home = document.querySelector("[data-portfolio-home]");
           const activeScene = home?.querySelector(".portfolio-scene.active");
           const activeCopy = activeScene?.querySelector(".portfolio-copy");
-          const inactiveCopies = home
-            ? Array.from(home.querySelectorAll(".portfolio-scene:not(.active) .portfolio-copy"))
-            : [];
           const activeOpacity = activeCopy
             ? Number.parseFloat(getComputedStyle(activeCopy).opacity)
             : 0;
-          const inactiveVisible = inactiveCopies.some((copy) =>
-            Number.parseFloat(getComputedStyle(copy).opacity) > 0.02
-          );
+          const inactiveVisible = home
+            ? Array.from(
+                home.querySelectorAll(".portfolio-scene:not(.active) .portfolio-copy"),
+              ).some((copy) => Number.parseFloat(getComputedStyle(copy).opacity) > 0.005)
+            : false;
           const settled = Boolean(
             performance.now() >= readyNotBefore &&
-            (home?.classList.contains("webgl-ready") || event.detail?.mode === "static") &&
+            (home?.classList.contains("webgl-ready") || staticMode) &&
+            home?.dataset.readyScene === requestedScene &&
             activeScene?.id === requestedScene &&
-            activeOpacity > 0.98 &&
+            activeOpacity >= 0.995 &&
             !inactiveVisible
           );
 
@@ -182,6 +298,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
         window.cancelAnimationFrame(returnReadyFrame);
         returnReadyFrame = requestAnimationFrame(waitForSettledHome);
+      }
+
+      function handlePortfolioHomeReady(event) {
+        queueReturnCanvasPreview(event.detail?.sceneId);
+        const home = document.querySelector("[data-portfolio-home]");
+        if (home && event.detail?.sceneId) {
+          home.dataset.readyScene = event.detail.sceneId;
+        }
+        waitForPortfolioHomeReady(
+          event.detail?.sceneId,
+          event.detail?.mode === "static",
+        );
       }
 
       function clearDepartingState() {
@@ -200,15 +328,98 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           .forEach((element) => element.classList.remove("route-transition-source"));
         document.querySelectorAll(".route-transition-origin-hidden")
           .forEach((element) => element.classList.remove("route-transition-origin-hidden"));
-        document.querySelectorAll(".route-transition-overlay")
-          .forEach((element) => element.remove());
+        const preparedOverlay = document.querySelector(
+          ".route-transition-overlay--prepared",
+        );
+        const transitionCanvas = document.querySelector(
+          ".portfolio-canvas--transition",
+        );
+        document.querySelectorAll(
+          ".route-transition-overlay:not(.route-transition-overlay--prepared)",
+        ).forEach((element) => element.remove());
+        if (
+          preparedOverlay instanceof HTMLElement &&
+          document.querySelector("[data-part-detail]")
+        ) {
+          if (!preparedOverlay.dataset.handoffStarted) {
+            preparedOverlay.dataset.handoffStarted = "1";
+            const finishDetailHandoff = async () => {
+              const detailImage = document.querySelector(
+                "[data-part-detail] .detail-hero-media img",
+              );
+              if (detailImage instanceof HTMLImageElement) {
+                try {
+                  await Promise.race([
+                    detailImage.decode(),
+                    new Promise((resolve) => window.setTimeout(resolve, 260)),
+                  ]);
+                } catch {}
+              }
+              await new Promise((resolve) => requestAnimationFrame(resolve));
+              await new Promise((resolve) => requestAnimationFrame(resolve));
+              const detailMedia = document.querySelector("[data-part-detail] .detail-hero-media");
+              const overlayImage = preparedOverlay.querySelector(
+                ".route-transition-image",
+              );
+              if (
+                detailMedia instanceof HTMLElement &&
+                overlayImage instanceof HTMLElement
+              ) {
+                const rect = detailMedia.getBoundingClientRect();
+                overlayImage.style.transition = "none";
+                overlayImage.style.left = `${rect.left}px`;
+                overlayImage.style.top = `${rect.top}px`;
+                overlayImage.style.width = `${rect.width}px`;
+                overlayImage.style.height = `${rect.height}px`;
+                overlayImage.style.setProperty(
+                  "--route-target-left",
+                  `${rect.left}px`,
+                );
+                overlayImage.style.setProperty(
+                  "--route-target-top",
+                  `${rect.top}px`,
+                );
+                overlayImage.style.setProperty(
+                  "--route-target-width",
+                  `${rect.width}px`,
+                );
+                overlayImage.style.setProperty(
+                  "--route-target-height",
+                  `${rect.height}px`,
+                );
+              }
+              if (transitionCanvas instanceof HTMLElement) {
+                transitionCanvas.classList.add("portfolio-canvas--handoff");
+                await Promise.race([
+                  new Promise((resolve) => {
+                    transitionCanvas.addEventListener("transitionend", resolve, {
+                      once: true,
+                    });
+                  }),
+                  new Promise((resolve) => window.setTimeout(resolve, 160)),
+                ]);
+                transitionCanvas.remove();
+              }
+              preparedOverlay.classList.add("route-transition-handoff");
+              window.setTimeout(() => {
+                preparedOverlay.remove();
+                window.dispatchEvent(new Event("site-detail-revealed"));
+              }, 190);
+            };
+            void finishDetailHandoff();
+          }
+        } else {
+          transitionCanvas?.remove();
+          preparedOverlay?.remove();
+        }
         routeIsChanging = false;
         const keepReturnCover = restoringHome
           && Boolean(document.querySelector("[data-portfolio-home]"))
           && Boolean(document.querySelector(".route-return-underlay"));
         if (keepReturnCover) {
           document.documentElement.classList.add("route-transition-returning");
-          returnRevealTimer = window.setTimeout(finishReturnReveal, 1800);
+          returnRevealTimer = window.setTimeout(finishReturnReveal, 1500);
+          waitForPortfolioHomeReady(window.location.hash.slice(1) || "yucong");
         } else {
           document.documentElement.classList.remove(
             "route-transition-returning",
@@ -225,9 +436,23 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       document.addEventListener("astro:after-swap", clearDepartingState, {
         signal: transitionSignal,
       });
+      document.addEventListener("astro:before-preparation", (event) => {
+        const gate = routeSwapGate;
+        if (!gate || event.to.href !== gate.href) return;
+        const loadPage = event.loader;
+        event.loader = async () => {
+          await Promise.all([loadPage(), gate.ready]);
+        };
+      }, { signal: transitionSignal });
       window.addEventListener("portfolio-home-ready", handlePortfolioHomeReady, {
         signal: transitionSignal,
       });
+      window.addEventListener("portfolio-scene-change", (event) => {
+        const index = Number(event.detail?.index);
+        if (!Number.isFinite(index)) return;
+        const scene = document.querySelector(`[data-scene-index="${index}"]`);
+        queueReturnCanvasPreview(scene?.id);
+      }, { signal: transitionSignal });
 
       function clientNavigate(href, options) {
         if (typeof window.__yucongNavigate === "function") {
@@ -256,7 +481,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         return sourceScene ?? document.querySelector(".portfolio-scene.active");
       }
 
-      function targetCoverRect() {
+      function targetCoverRect(imageAspect, imageWidth) {
+        const parsedAspect = Number(imageAspect);
+        const aspect = Number.isFinite(parsedAspect) && parsedAspect > 0
+          ? parsedAspect
+          : 1366 / 844;
+        const parsedWidth = Number(imageWidth);
         const stageWidth = Math.min(
           window.innerWidth,
           window.innerHeight * (16 / 9),
@@ -265,13 +495,110 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         const stageHeight = stageWidth * (9 / 16);
         const stageLeft = (window.innerWidth - stageWidth) / 2;
         const stageTop = (window.innerHeight - stageHeight) / 2;
-        const width = stageWidth * 0.52;
+        const width = Number.isFinite(parsedWidth) && parsedWidth > 0
+          ? stageWidth * parsedWidth / 100
+          : Math.min(
+            stageWidth * 0.52,
+            stageHeight * 0.6 * aspect,
+          );
+        const height = width / aspect;
         return {
-          top: stageTop + stageHeight * 0.24,
+          top: stageTop + (stageHeight - height) / 2,
           left: stageLeft + stageWidth * 0.5 - width / 2,
           width,
-          height: width * (844 / 1366),
+          height,
         };
+      }
+
+      function storePortfolioReturn(href, options = {}) {
+        if (!href) return;
+        const url = new URL(href, window.location.href);
+        const home = document.querySelector("[data-portfolio-home]");
+        const returnScene = transitionSceneFor(options.source, options.sceneId);
+        if (!home || !returnScene?.id) return;
+
+        const returnRecord = {
+          detailPath: url.pathname,
+          returnHref: `/#${returnScene.id}`,
+          sceneId: returnScene.id,
+          color: returnScene.dataset.sceneBackground,
+          foreground: returnScene.dataset.sceneForeground,
+          titleColor: returnScene.dataset.sceneTitle,
+          accent: returnScene.dataset.sceneAccent,
+          rail: returnScene.dataset.sceneRail,
+          previewHtml: returnScene.outerHTML,
+          previewHeaderHtml: document.querySelector(".site-header")?.outerHTML,
+          previewProgressHtml: home.querySelector(".portfolio-progress")?.outerHTML,
+        };
+
+        try {
+          sessionStorage.setItem("yucong-detail-return", JSON.stringify(returnRecord));
+        } catch {}
+      }
+
+      function primeRouteOverlay(scene, options = {}) {
+        if (reducedMotion.matches) return null;
+        const existing = document.querySelector(
+          ".route-transition-overlay--primed",
+        );
+        if (existing) return existing;
+
+        const overlay = document.createElement("div");
+        overlay.className =
+          "route-transition-overlay route-transition-overlay--primed";
+        overlay.style.setProperty(
+          "--route-background",
+          options.color
+            ?? scene?.dataset.sceneBackground
+            ?? getComputedStyle(document.body).backgroundColor,
+        );
+        overlay.style.setProperty(
+          "--route-accent",
+          options.accent
+            ?? scene?.dataset.sceneAccent
+            ?? "currentColor",
+        );
+        overlay.style.setProperty(
+          "--route-wipe-color",
+          options.accent
+            ?? scene?.dataset.sceneAccent
+            ?? options.color
+            ?? scene?.dataset.sceneBackground
+            ?? getComputedStyle(document.body).backgroundColor,
+        );
+
+        const imageSource = options.image ?? scene?.dataset.sceneImage;
+        if (imageSource) {
+          const image = document.createElement("img");
+          const target = targetCoverRect(options.imageAspect, options.imageWidth);
+          image.src = imageSource;
+          image.alt = "";
+          image.className = "route-transition-image";
+          image.style.left = `${target.left}px`;
+          image.style.top = `${target.top}px`;
+          image.style.width = `${target.width}px`;
+          image.style.height = `${target.height}px`;
+          image.style.objectPosition = options.imagePosition
+            ?? scene?.dataset.sceneDetailPosition
+            ?? "center";
+          image.style.setProperty("--route-target-left", `${target.left}px`);
+          image.style.setProperty("--route-target-top", `${target.top}px`);
+          image.style.setProperty("--route-target-width", `${target.width}px`);
+          image.style.setProperty("--route-target-height", `${target.height}px`);
+          overlay.append(image);
+          void image.decode().catch(() => {});
+        }
+        const transitionLayer = document.getElementById(
+          "route-transition-layer",
+        );
+        (transitionLayer ?? document.body).append(overlay);
+        window.dispatchEvent(new CustomEvent("site-scroll-cue-start", { detail: {
+          background: options.accent ?? scene?.dataset.sceneRail,
+          foreground: scene?.dataset.sceneDetailForeground ?? "#ffffff",
+        } }));
+        overlay.getBoundingClientRect();
+        requestAnimationFrame(() => overlay.classList.add("active"));
+        return overlay;
       }
 
       function createRouteOverlay(scene, options) {
@@ -287,36 +614,67 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           ?? scene?.dataset.sceneBackground
           ?? getComputedStyle(document.body).backgroundColor;
 
-        const overlay = document.createElement("div");
-        overlay.className = "route-transition-overlay";
+        const primedOverlay = options.webglPrepared
+          ? document.querySelector(".route-transition-overlay--primed")
+          : null;
+        const overlay = primedOverlay ?? document.createElement("div");
+        if (primedOverlay) {
+          overlay.classList.add("route-transition-overlay--prepared");
+        } else {
+          overlay.className = options.webglPrepared
+            ? "route-transition-overlay route-transition-overlay--prepared"
+            : "route-transition-overlay";
+        }
         overlay.style.setProperty("--route-background", background);
+        overlay.style.setProperty(
+          "--route-accent",
+          options.accent
+            ?? scene?.dataset.sceneAccent
+            ?? "currentColor",
+        );
+        overlay.style.setProperty(
+          "--route-wipe-color",
+          options.accent
+            ?? scene?.dataset.sceneAccent
+            ?? background,
+        );
 
         if (imageSource && sourceRect) {
-          const image = document.createElement("img");
-          const target = targetCoverRect();
+          const image = overlay.querySelector(".route-transition-image")
+            ?? document.createElement("img");
+          const target = targetCoverRect(options.imageAspect, options.imageWidth);
           image.src = imageSource;
           image.alt = "";
           image.className = "route-transition-image";
-          image.style.left = `${sourceRect.left}px`;
-          image.style.top = `${sourceRect.top}px`;
-          image.style.width = `${sourceRect.width}px`;
-          image.style.height = `${sourceRect.height}px`;
-          image.style.objectPosition = sourceImage
-            ? getComputedStyle(sourceImage).objectPosition
-            : "center";
+          image.style.left = `${options.webglPrepared ? target.left : sourceRect.left}px`;
+          image.style.top = `${options.webglPrepared ? target.top : sourceRect.top}px`;
+          image.style.width = `${options.webglPrepared ? target.width : sourceRect.width}px`;
+          image.style.height = `${options.webglPrepared ? target.height : sourceRect.height}px`;
+          image.style.objectPosition = options.imagePosition
+            ?? scene?.dataset.sceneDetailPosition
+            ?? (sourceImage ? getComputedStyle(sourceImage).objectPosition : "center");
           image.style.setProperty("--route-target-left", `${target.left}px`);
           image.style.setProperty("--route-target-top", `${target.top}px`);
           image.style.setProperty("--route-target-width", `${target.width}px`);
           image.style.setProperty("--route-target-height", `${target.height}px`);
-          overlay.append(image);
+          if (!image.isConnected) overlay.append(image);
         }
 
-        const transitionLayer = document.getElementById("route-transition-layer");
-        (transitionLayer ?? document.body).append(overlay);
+        if (!primedOverlay) {
+          const transitionLayer = document.getElementById("route-transition-layer");
+          (transitionLayer ?? document.body).append(overlay);
+        }
         overlay.getBoundingClientRect();
         scene?.classList.remove("route-transition-source");
         sourceCover?.classList.add("route-transition-origin-hidden");
         overlay.classList.add("active");
+        if (scene) {
+          window.dispatchEvent(new CustomEvent("site-scroll-cue-start", { detail: {
+            background: options.accent ?? scene.dataset.sceneRail,
+            foreground: scene.dataset.sceneDetailForeground ?? "#ffffff",
+          } }));
+        }
+        return overlay;
       }
 
       function navigateToPage(href, options = {}) {
@@ -324,52 +682,34 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         routeIsChanging = true;
 
         const url = new URL(href, window.location.href);
-        const home = document.querySelector("[data-portfolio-home]");
         const returnScene = transitionSceneFor(options.source, options.sceneId);
-        if (home && returnScene?.id) {
-          const returnRecord = {
-            detailPath: url.pathname,
-            returnHref: `/#${returnScene.id}`,
-            color: returnScene.dataset.sceneBackground,
-            foreground: returnScene.dataset.sceneForeground,
-            titleColor: returnScene.dataset.sceneTitle,
-            accent: returnScene.dataset.sceneAccent,
-            previewHtml: returnScene.outerHTML,
-            previewHeaderHtml: document.querySelector(".site-header")?.outerHTML,
-            previewProgressHtml: home.querySelector(".portfolio-progress")?.outerHTML,
-            previewCanvas: undefined,
-          };
-          try {
-            const previewCanvas = home
-              .querySelector("[data-portfolio-canvas]")
-              ?.toDataURL("image/webp", 0.72);
-            if (previewCanvas && previewCanvas.length > 8192) {
-              returnRecord.previewCanvas = previewCanvas;
-            }
-          } catch {}
-          try {
-            sessionStorage.setItem("yucong-detail-return", JSON.stringify(returnRecord));
-          } catch {
-            delete returnRecord.previewCanvas;
-            try {
-              sessionStorage.setItem("yucong-detail-return", JSON.stringify(returnRecord));
-            } catch {}
-          }
-        }
+        if (!options.webglPrepared) storePortfolioReturn(url.href, options);
         if (reducedMotion.matches) {
           clientNavigate(url.href);
           return;
         }
 
         const scene = returnScene;
-        scene?.classList.add("route-transition-source");
-        document.querySelector("[data-portfolio-home]")
-          ?.classList.add("route-transition-prepared");
+        if (!options.webglPrepared) {
+          scene?.classList.add("route-transition-source");
+          document.querySelector("[data-portfolio-home]")
+            ?.classList.add("route-transition-prepared");
+        }
         document.documentElement.classList.add("route-transition-leaving");
 
         try {
           sessionStorage.setItem("yucong-route-transition", "1");
         } catch {}
+
+        if (options.webglPrepared) {
+          // Match the reference flow: the route becomes visible immediately,
+          // its HTML loads in parallel, and Astro may swap only after the
+          // persistent WebGL card has finished covering the old page.
+          createRouteSwapGate(url.href);
+          showRouteInAddressBar(url);
+          clientNavigate(url.href);
+          return;
+        }
 
         requestAnimationFrame(() => {
           createRouteOverlay(scene, options);
@@ -389,6 +729,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         }
 
         routeIsChanging = true;
+        const returnUrl = new URL(link.href, window.location.href);
+        replaceRouteInAddressBar(returnUrl);
         const underlay = document.createElement("div");
         underlay.className = "route-return-underlay";
         underlay.style.background = link.dataset.transitionColor
@@ -399,17 +741,22 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             sessionStorage.getItem("yucong-detail-return") ?? "null",
           );
           if (savedReturn?.previewHtml) {
+            const livePreview = window.__yucongReturnCanvasPreview;
+            const previewCanvas = livePreview?.sceneId === savedReturn.sceneId
+              ? livePreview.url
+              : undefined;
             const preview = document.createElement("div");
             preview.className = "portfolio-home route-return-preview";
             preview.style.setProperty("--portfolio-bg", savedReturn.color);
             preview.style.setProperty("--portfolio-fg", savedReturn.foreground);
             preview.style.setProperty("--portfolio-title", savedReturn.titleColor);
             preview.style.setProperty("--portfolio-accent", savedReturn.accent);
+            preview.style.setProperty("--portfolio-rail", savedReturn.rail ?? savedReturn.accent);
             underlay.style.setProperty("--return-fg", savedReturn.foreground);
             preview.innerHTML = `
               <div class="portfolio-backdrop"></div>
-              ${savedReturn.previewCanvas
-                ? `<img class="route-return-canvas" src="${savedReturn.previewCanvas}" alt="">`
+              ${previewCanvas
+                ? `<img class="route-return-canvas" src="${previewCanvas}" alt="">`
                 : ""}
               ${savedReturn.previewProgressHtml ?? ""}
               <div class="portfolio-scenes">${savedReturn.previewHtml}</div>
@@ -426,14 +773,24 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         document.querySelector(".page-shell--detail")?.getBoundingClientRect();
 
         requestAnimationFrame(() => {
+          underlay.classList.add("route-return-covering");
           document.documentElement.classList.add("route-transition-returning");
-          window.setTimeout(() => {
+          let coverFinished = false;
+          const finishCover = () => {
+            if (coverFinished) return;
+            coverFinished = true;
             try {
               sessionStorage.setItem("yucong-route-restoring", "1");
               sessionStorage.removeItem("yucong-detail-return");
             } catch {}
-            clientNavigate(link.href, { history: "replace" });
-          }, 760);
+            requestAnimationFrame(() => {
+              clientNavigate(returnUrl.href, { history: "replace" });
+            });
+          };
+          underlay.addEventListener("transitionend", (event) => {
+            if (event.propertyName === "clip-path") finishCover();
+          }, { once: true });
+          window.setTimeout(finishCover, 1120);
         });
       }
 
@@ -455,6 +812,26 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin) return;
         if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+        const portfolioHome = link.closest("[data-portfolio-home]");
+        if (
+          portfolioHome?.classList.contains("webgl-ready") &&
+          link.dataset.detailReturn !== "true" &&
+          window.innerWidth > 760
+        ) {
+          const reelRequest = new CustomEvent("portfolio-reel-open-request", {
+            cancelable: true,
+            detail: {
+              href: url.href,
+              clientX: event.clientX,
+              clientY: event.clientY,
+            },
+          });
+          window.dispatchEvent(reelRequest);
+          if (reelRequest.defaultPrevented) {
+            event.preventDefault();
+            return;
+          }
+        }
         event.preventDefault();
         if (link.dataset.detailReturn === "true") {
           returnWithSlide(link);
@@ -463,7 +840,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         navigateToPage(url.href, {
           source: link,
           color: link.dataset.transitionColor,
+          accent: link.dataset.transitionAccent,
           image: link.dataset.transitionImage,
+          imagePosition: link.dataset.transitionPosition,
+          imageAspect: Number(link.dataset.transitionAspect) || undefined,
+          imageWidth: Number(link.dataset.transitionWidth) || undefined,
         });
       }, { capture: true, signal: transitionSignal });
 
@@ -481,17 +862,57 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         if (link instanceof HTMLAnchorElement) prefetchPage(link.href);
       }, { signal: transitionSignal });
 
-      window.addEventListener("site-transition-navigate", (event) => {
-        navigateToPage(event.detail?.href, {
+      window.addEventListener("site-transition-handoff", (event) => {
+        const href = new URL(event.detail?.href, window.location.href).href;
+        const scene = transitionSceneFor(null, event.detail?.sceneId);
+        requestAnimationFrame(() => {
+          createRouteOverlay(scene, {
+            color: event.detail?.color,
+            accent: event.detail?.accent,
+            image: event.detail?.image,
+            imagePosition: event.detail?.imagePosition,
+            imageAspect: event.detail?.imageAspect,
+            imageWidth: event.detail?.imageWidth,
+            webglPrepared: true,
+          });
+          document.querySelector("[data-portfolio-home]")
+            ?.classList.add("route-transition-prepared");
+          requestAnimationFrame(() => releaseRouteSwapGate(href));
+        });
+      }, { signal: transitionSignal });
+
+      window.addEventListener("site-transition-prepare", (event) => {
+        const scene = transitionSceneFor(null, event.detail?.sceneId);
+        captureReturnCanvasPreview(event.detail?.sceneId);
+        storePortfolioReturn(event.detail?.href, {
           sceneId: event.detail?.sceneId,
           color: event.detail?.color,
           image: event.detail?.image,
+        });
+        primeRouteOverlay(scene, {
+          color: event.detail?.color,
+          accent: event.detail?.accent,
+          image: event.detail?.image,
+          imageAspect: event.detail?.imageAspect,
+          imageWidth: event.detail?.imageWidth,
+          imagePosition: event.detail?.imagePosition,
+        });
+        navigateToPage(event.detail?.href, {
+          sceneId: event.detail?.sceneId,
+          color: event.detail?.color,
+          accent: event.detail?.accent,
+          image: event.detail?.image,
+          imagePosition: event.detail?.imagePosition,
+          imageAspect: event.detail?.imageAspect,
+          imageWidth: event.detail?.imageWidth,
+          webglPrepared: true,
         });
       }, { signal: transitionSignal });
 
       window.setTimeout(() => {
         document.documentElement.classList.remove("route-transition-arriving");
       }, 1200);
+      })();
     </script>
   </body>
 </html>

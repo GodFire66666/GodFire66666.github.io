@@ -11,6 +11,8 @@ const { detail = false, detailReturnColor = "#3d4545", overlay = false } = Astro
 const detailPath = Astro.url.pathname;
 const detailReturnScene = detailPath.startsWith("/projects/tarot/")
   ? "tarot"
+  : detailPath.startsWith("/photography/")
+    ? "photography"
   : detailPath.startsWith("/notes/")
     ? "notes"
     : detailPath.startsWith("/posts/")
@@ -46,6 +48,9 @@ const detailReturnHref = `/#${detailReturnScene}`;
         <a href="/projects/">
           <span class="en-text">Projects</span><span class="zh-text">项目</span>
         </a>
+        <a href="/photography/">
+          <span class="en-text">Photography</span><span class="zh-text">摄影</span>
+        </a>
         <a href="/about/">
           <span class="en-text">About</span><span class="zh-text">关于</span>
         </a>
@@ -59,7 +64,7 @@ const detailReturnHref = `/#${detailReturnScene}`;
       </>
     )}
     {detail && (
-      <a href="/about/" data-transition-link data-transition-color="#3d4545">
+      <a href="/about/" data-transition-link data-transition-color="#3d4545" data-transition-accent="#c7b8b1">
         <span class="en-text">About</span><span class="zh-text">关于</span>
       </a>
     )}
@@ -74,6 +79,7 @@ const detailReturnHref = `/#${detailReturnScene}`;
     </button>
   </nav>
 </header>
+{detail && <div class="detail-back-edge" aria-hidden="true"></div>}
 
 <script>
   const languageKey = "yucong-site-language";
@@ -95,16 +101,13 @@ const detailReturnHref = `/#${detailReturnScene}`;
       try {
         const savedReturn = JSON.parse(
           sessionStorage.getItem("yucong-detail-return") ?? "null",
-        ) as { color?: string; detailPath?: string; returnHref?: string } | null;
+        ) as { detailPath?: string; returnHref?: string } | null;
         if (
           savedReturn?.detailPath === window.location.pathname &&
-          /^\/#(?:yucong|tarot|notes|writing)$/.test(savedReturn.returnHref ?? "")
+          /^\/#(?:yucong|tarot|notes|writing|photography)$/.test(savedReturn.returnHref ?? "")
         ) {
           detailReturnLink.href = savedReturn.returnHref ?? detailReturnLink.href;
           detailReturnLink.dataset.historyReturn = "true";
-          if (savedReturn.color) {
-            detailReturnLink.dataset.transitionColor = savedReturn.color;
-          }
         }
       } catch {
         // The server-rendered scene link remains a complete fallback.

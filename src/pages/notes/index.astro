@@ -3,8 +3,6 @@ import NoteCard from "../../components/NoteCard.astro";
 import { xiaohongshuPosts } from "../../data/xiaohongshu";
 import PartDetailLayout from "../../layouts/PartDetailLayout.astro";
 
-const cover = xiaohongshuPosts.find((post) => post.id === "6a803b2c0000000026034f93");
-const coverImage = cover?.images[0] ?? "/xiaohongshu/6a803b2c0000000026034f93/images/01.webp";
 const meta = [
   { label: "Collection", labelZh: "收录", value: `${xiaohongshuPosts.length} public notes`, valueZh: `${xiaohongshuPosts.length} 篇公开随笔` },
   { label: "Source", labelZh: "来源", value: "Xiaohongshu", valueZh: "小红书" },
@@ -22,23 +20,31 @@ const meta = [
   statementZh="很小的片段，也能留住一整段时间的形状。"
   description="Shorter thoughts and visual records about feeling, relationships, music, games, and ordinary days. They were originally shared on Xiaohongshu, and their original Chinese is preserved here."
   descriptionZh="关于情感、关系、音乐、游戏与普通日子的短篇想法和图像记录。它们最初发布于小红书，并在这里保留中文原文。"
-  image={coverImage}
-  imageAlt={cover?.title ?? "Sunset note titled Lose yourself to find yourself"}
-  imagePosition="center 72%"
+  image="/notes/pampas-clouds-cover.png"
+  imageAlt="Pampas grass beneath bright summer clouds"
+  imageAspect={1448 / 1086}
+  imageWidth={52}
+  imagePosition="center"
   titleLeft="8.143%"
   titleLeftZh="12.66%"
   outlineHeroTitle
   showOverview={false}
-  background="#dfeadf"
-  foreground="#294139"
-  accent="#a96257"
+  background="#326b7e"
+  foreground="#f6f2e8"
+  accent="#f0d09a"
+  heroBackground="#f0d09a"
+  heroForeground="#111719"
+  heroAccent="#111719"
+  heroOutline="#111719"
   {meta}
-  nextHref="/posts/start-writing/"
-  nextTitle="Writing"
-  nextTitleZh="文章"
-  nextImage="/projects/writing-cover.webp"
-  nextBackground="#eee4e7"
-  nextAccent="#a04f6a"
+  nextHref="/projects/tarot/"
+  nextTitle="Quiet Tarot"
+  nextTitleZh="静谧塔罗"
+  nextImage="/projects/yucongs-tarot.jpg"
+  nextImageAspect={1874 / 1035}
+  nextBackground="#221e34"
+  nextAccent="#b6a3a5"
+  nextRail="#b6a3a5"
 >
   <section class="notes-page detail-notes-collection" aria-labelledby="notes-heading" data-detail-reveal>
     <header class="notes-intro">

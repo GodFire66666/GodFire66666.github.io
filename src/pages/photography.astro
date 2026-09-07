@@ -1,0 +1,251 @@
+---
+import PartDetailLayout from "../layouts/PartDetailLayout.astro";
+
+const series = [
+  {
+    slug: "rg-hi-nu", title: "RG Hi-Nu Gundam", titleZh: "RG 海牛高达",
+    category: "Painted model · Studio light", categoryZh: "喷涂模型 · 棚拍光影",
+    description: "Cool blue armor, sharp silhouettes, and the weight of a machine caught in motion.",
+    descriptionZh: "以冷蓝装甲、锐利轮廓与动态构图，拍出机械在运动中的重量感。",
+    source: "https://tieba.baidu.com/p/7886508333", featured: [3, 6, 13], count: 13,
+  },
+  {
+    slug: "metal-build-strike", title: "METAL BUILD Strike", titleZh: "METAL BUILD 强袭高达",
+    category: "Die-cast figure · Action study", categoryZh: "合金成品 · 动态研究",
+    description: "A study in balance: long weapons, layered armor, and poses held just before impact.",
+    descriptionZh: "在长兵器、层叠装甲与临界动作之间，寻找画面的平衡。",
+    source: "https://tieba.baidu.com/p/7854720882", featured: [3, 7, 9], count: 15,
+  },
+  {
+    slug: "hirm-red-frame", title: "HIRM Red Frame", titleZh: "HIRM 红异端",
+    category: "Gundam · Red and shadow", categoryZh: "高达模型 · 红与影",
+    description: "The red frame becomes the rhythm, while black space gives every gesture room to land.",
+    descriptionZh: "让红色骨架成为画面节奏，也让黑色空间承接每一个动作。",
+    source: "https://tieba.baidu.com/p/7765226226", featured: [1, 3, 11], count: 11,
+  },
+  {
+    slug: "shf-delta", title: "S.H.Figuarts Delta", titleZh: "S.H.Figuarts 德尔塔",
+    category: "Kamen Rider · Golden detail", categoryZh: "假面骑士 · 金色细节",
+    description: "A compact set built around metallic texture, controlled highlights, and a single clawed silhouette.",
+    descriptionZh: "围绕金属质感、克制高光与爪形轮廓展开的一组小型拍摄。",
+    source: "https://tieba.baidu.com/p/7756646653", featured: [1, 3, 5], count: 5,
+  },
+  {
+    slug: "metal-build-red-frame", title: "METAL BUILD Red Frame", titleZh: "METAL BUILD 红异端",
+    category: "Die-cast figure · Sword forms", categoryZh: "合金成品 · 剑式构图",
+    description: "Red, white, and black lines held together by the direction of the blade.",
+    descriptionZh: "让红、白与黑色线条，沿着刀刃的方向聚拢在同一幅画面里。",
+    source: "https://tieba.baidu.com/p/7748297840", featured: [1, 6, 11], count: 15,
+  },
+  {
+    slug: "arkham-knight", title: "Arkham Knight", titleZh: "阿卡姆骑士",
+    category: "Character figure · Night scene", categoryZh: "角色模型 · 夜景氛围",
+    description: "Blue practical light and deep shadows turn a small figure into a frame from Gotham.",
+    descriptionZh: "用蓝色实景光与深影，让一只小比例模型拥有哥谭电影画面的气氛。",
+    source: "https://tieba.baidu.com/p/7745451046", featured: [1, 3, 6], count: 9,
+  },
+  {
+    slug: "ultimate-kuuga", title: "Ultimate Rising Kuuga", titleZh: "究极升华空我",
+    category: "S.H.Figuarts · Light and form", categoryZh: "真骨雕 · 光线与形体",
+    description: "Gold catches the light first; the dark body keeps the pose grounded and restrained.",
+    descriptionZh: "让金色先接住光线，再由深色身体稳住姿态与力量。",
+    source: "https://tieba.baidu.com/p/7729614210", featured: [2, 4, 7], count: 9,
+  },
+  {
+    slug: "mdlx-bumblebee", title: "MDLX Bumblebee", titleZh: "MDLX 小黄蜂",
+    category: "Threezero · Character study", categoryZh: "Threezero · 角色习作",
+    description: "Warm yellow armor against a midnight set, photographed with a little humor and attitude.",
+    descriptionZh: "让暖黄色装甲落在午夜布景里，也保留角色本身的幽默与态度。",
+    source: "https://tieba.baidu.com/p/7710857491", featured: [1, 3, 12], count: 13,
+  },
+  {
+    slug: "robot-spirits-freedom", title: "Robot Spirits Freedom", titleZh: "Robot 魂 自由高达",
+    category: "Gundam · Flight pose", categoryZh: "高达模型 · 飞行姿态",
+    description: "Five frames focused on wings, negative space, and the instant before acceleration.",
+    descriptionZh: "用五张照片集中表现羽翼、留白，以及加速前的那个瞬间。",
+    source: "https://tieba.baidu.com/p/7702722069", featured: [1, 3, 5], count: 5,
+  },
+  {
+    slug: "mpm13-blackout", title: "MPM-13 Blackout", titleZh: "MPM-13 眩晕",
+    category: "Transformers · Scale comparison", categoryZh: "变形金刚 · 比例对比",
+    description: "A heavier mechanical study comparing silhouette, surface detail, and physical scale.",
+    descriptionZh: "一组更厚重的机械习作，对比轮廓、表面细节与真实比例感。",
+    source: "https://tieba.baidu.com/p/7980615800", featured: [1, 7, 14], count: 14,
+  },
+  {
+    slug: "aps01-optimus-prime", title: "APS-01 Optimus Prime", titleZh: "APS-01 擎天柱",
+    category: "Transformers · Archive set", categoryZh: "变形金刚 · 旧作存档",
+    description: "An older four-frame set, preserved for its direct posing and clean mechanical presence.",
+    descriptionZh: "一组较早的四张作品，保留它直接的姿态与干净的机械存在感。",
+    source: "https://tieba.baidu.com/p/7971669462", featured: [1, 2, 4], count: 4,
+  },
+  {
+    slug: "cangdao-white-dragon", title: "Cangdao White Dragon", titleZh: "藏道模型 白龙",
+    category: "Original mecha · White armor", categoryZh: "原创机甲 · 白色装甲",
+    description: "White armor, long weapons, and restrained color photographed as a final mechanical vignette.",
+    descriptionZh: "以白色装甲、长兵器与克制色彩，为这组机械摄影留下最后一个片段。",
+    source: "https://tieba.baidu.com/p/7702729792", featured: [1, 3, 5], count: 5,
+  },
+  {
+    slug: "ft-ko-cyclonus", title: "FT KO Cyclonus", titleZh: "FT KO 狂飙",
+    category: "Transformers · Lavender study", categoryZh: "变形金刚 · 紫色光影",
+    description: "Lavender armor and sharp red eyes, photographed between quiet portraits and airborne motion.",
+    descriptionZh: "在安静的角色肖像与腾空动作之间，表现淡紫装甲和锐利红眼的气质。",
+    source: "https://tieba.baidu.com/p/7975144195", featured: [1, 6, 8], count: 12,
+  },
+  {
+    slug: "ut-optimus-prime", title: "UT Optimus Prime", titleZh: "UT 擎天柱",
+    category: "Transformers · Leader portraits", categoryZh: "变形金刚 · 领袖肖像",
+    description: "A compact portrait set moving between dramatic blue light, truck form, and scale comparison.",
+    descriptionZh: "一组紧凑的领袖肖像，在蓝色戏剧光、载具形态与比例对比之间切换。",
+    source: "https://tieba.baidu.com/p/7726126931", featured: [2, 4, 8], count: 8,
+  },
+  {
+    slug: "bunny-lux", title: "Bunny Lux", titleZh: "兔女郎 拉克丝",
+    category: "Character figure · Portrait study", categoryZh: "角色手办 · 肖像习作",
+    description: "Soft pink hair, a black backdrop, and close framing shaped into a playful character study.",
+    descriptionZh: "用柔粉色长发、黑色背景与近距离构图，完成一组轻盈的角色肖像。",
+    source: "https://tieba.baidu.com/p/7688456962", featured: [1, 5, 10], count: 10,
+  },
+  {
+    slug: "gipsy-danger", title: "Soul of Chogokin Gipsy Danger", titleZh: "超合金魂 危险流浪者",
+    category: "Pacific Rim · Reactor light", categoryZh: "环太平洋 · 反应堆光影",
+    description: "The glowing reactor anchors a set of heavy silhouettes, metallic details, and combat poses.",
+    descriptionZh: "以发光反应堆为视觉中心，串联厚重轮廓、金属细节与战斗姿态。",
+    source: "https://tieba.baidu.com/p/7646745958", featured: [1, 6, 11], count: 11,
+  },
+  {
+    slug: "strike-freedom-soul-blue", title: "Strike Freedom Soul Blue", titleZh: "强袭自由 Soul Blue",
+    category: "METAL BUILD · Winged motion", categoryZh: "METAL BUILD · 羽翼动态",
+    description: "White armor, blue wings, and gold joints arranged as a sequence of expanding motion.",
+    descriptionZh: "让白色装甲、蓝色羽翼与金色关节，共同组成一段不断展开的动作。",
+    source: "https://tieba.baidu.com/p/7628117834", featured: [1, 8, 13], count: 13,
+  },
+  {
+    slug: "dlx-optimus-prime", title: "Threezero DLX Optimus Prime", titleZh: "Threezero DLX 擎天柱",
+    category: "Transformers · Cinematic detail", categoryZh: "变形金刚 · 电影细节",
+    description: "Dense mechanical surfaces held against black, with red and blue light defining the figure.",
+    descriptionZh: "把繁密机械表面置于黑色背景中，再由红蓝光线勾勒人物形体。",
+    source: "https://tieba.baidu.com/p/7612423863", featured: [1, 3, 6], count: 6,
+  },
+  {
+    slug: "rg-nightingale", title: "RG Nightingale", titleZh: "RG 夜莺",
+    category: "Gundam · Crimson fragments", categoryZh: "高达模型 · 绯红局部",
+    description: "A close study of crimson armor, oversized equipment, and the machine's unusual proportions.",
+    descriptionZh: "以近距离镜头记录绯红装甲、巨大装备，以及这台机体独特的比例。",
+    source: "https://tieba.baidu.com/p/7593751983", featured: [2, 3, 7], count: 7,
+  },
+  {
+    slug: "pagani-huayra", title: "Pagani Huayra Roadster", titleZh: "帕加尼 Huayra Roadster",
+    category: "Scale car · Burgundy gloss", categoryZh: "汽车模型 · 酒红光泽",
+    description: "Burgundy paint, open bodywork, and tiny cabin details photographed like a full-size machine.",
+    descriptionZh: "用酒红车漆、开启的车身结构与微缩内饰，拍出接近真车的存在感。",
+    source: "https://tieba.baidu.com/p/7553909683", featured: [1, 5, 10], count: 12,
+  },
+  {
+    slug: "metal-build-eva01", title: "METAL BUILD EVA-01", titleZh: "METAL BUILD 初号机",
+    category: "Evangelion · Pose sequence", categoryZh: "新世纪福音战士 · 动作序列",
+    description: "Twenty-one frames exploring the long silhouette, vivid armor, and restless movement of EVA-01.",
+    descriptionZh: "用二十一张画面探索初号机修长的轮廓、鲜明装甲与不安定的动作感。",
+    source: "https://tieba.baidu.com/p/7484001539", featured: [2, 12, 20], count: 21,
+  },
+  {
+    slug: "metal-build-dynames", title: "METAL BUILD Dynames", titleZh: "METAL BUILD 力天使",
+    category: "Gundam · Tactical silhouette", categoryZh: "高达模型 · 战术轮廓",
+    description: "A restrained black set focused on the rifle, shield geometry, and the posture of a sniper.",
+    descriptionZh: "在克制的黑色布景中，集中表现长枪、盾牌几何与狙击手的姿态。",
+    source: "https://tieba.baidu.com/p/7471647991", featured: [2, 8, 13], count: 14,
+  },
+  {
+    slug: "flame-toys-tarn", title: "Flame Toys Tarn", titleZh: "铁机巧 塔恩",
+    category: "Transformers · Mechanical portrait", categoryZh: "变形金刚 · 机械肖像",
+    description: "Dark purple metal and a mask-like face photographed as an imposing mechanical portrait.",
+    descriptionZh: "以深紫金属与面具般的脸部，塑造一组压迫感鲜明的机械肖像。",
+    source: "https://tieba.baidu.com/p/7452522389", featured: [2, 8, 12], count: 14,
+  },
+  {
+    slug: "revoltech-harley-quinn", title: "Revoltech Harley Quinn", titleZh: "海洋堂 哈莉·奎因",
+    category: "Character figure · Playful poses", categoryZh: "角色模型 · 戏剧姿态",
+    description: "A lively closing set built from bold color, expressive poses, and a little staged mischief.",
+    descriptionZh: "用大胆配色、夸张姿态与一点舞台式顽皮，组成一组轻快的角色摄影。",
+    source: "https://tieba.baidu.com/p/7377957035", featured: [1, 4, 10], count: 11,
+  },
+];
+
+const photoPath = (slug: string, index: number) =>
+  `/photography/${slug}/gallery/${String(index).padStart(2, "0")}.webp`;
+const totalPhotographs = series.reduce((total, item) => total + item.count, 0);
+const meta = [
+  { label: "Archive", labelZh: "存档", value: `${series.length} series`, valueZh: `${series.length} 组作品` },
+  { label: "Photographs", labelZh: "照片", value: `${totalPhotographs} images`, valueZh: `${totalPhotographs} 张` },
+  { label: "Years", labelZh: "年份", value: "2021–2022", valueZh: "2021–2022" },
+];
+---
+
+<PartDetailLayout
+  part="02"
+  title="Model Photography"
+  titleZh="模型摄影"
+  eyebrow={`${series.length} Series · ${totalPhotographs} Photographs`}
+  eyebrowZh={`${series.length} 组作品 · ${totalPhotographs} 张照片`}
+  statement="Small worlds, shaped by light."
+  statementZh="用光线，让模型拥有自己的世界。"
+  description="An archive from the years when I photographed scale models: posing, lighting, and building a believable moment inside a very small frame."
+  descriptionZh="这是我曾经拍摄比例模型时留下的完整存档：调整姿态、布置光线，在很小的画幅里构建一个可信的瞬间。"
+  image="/photography/rg-hi-nu/gallery/13.webp"
+  imageAlt="RG Hi-Nu Gundam posed with its rifle against a dark background"
+  imageAspect={1600 / 1067}
+  imagePosition="center"
+  titleLeft="5.5%"
+  titleLeftZh="10%"
+  background="#172536"
+  foreground="#eef2f1"
+  accent="#88b2cf"
+  heroBackground="#a8bdcb"
+  heroForeground="#172536"
+  heroAccent="#294d65"
+  heroOutline="#f0f3f2"
+  {meta}
+  nextHref="/notes/"
+  nextTitle="Notes"
+  nextTitleZh="随笔"
+  nextImage="/notes/pampas-clouds-cover.png"
+  nextImageAspect={1448 / 1086}
+  nextBackground="#326b7e"
+  nextImageWidth={52}
+  nextAccent="#f0d09a"
+  nextRail="#f0d09a"
+>
+  <section class="photography-series-list detail-photography-collection" aria-label="Model photography archive">
+    {series.map((item, index) => (
+      <article class:list={["photography-series", { "photography-series--reverse": index % 2 === 1 }]} id={item.slug}>
+        <header class="photography-series-copy">
+          <p class="photography-series-number">{String(index + 1).padStart(2, "0")} / {String(series.length).padStart(2, "0")}</p>
+          <p class="photography-series-category"><span class="en-text">{item.category}</span><span class="zh-text">{item.categoryZh}</span></p>
+          <h2><span class="en-text">{item.title}</span><span class="zh-text">{item.titleZh}</span></h2>
+          <p class="photography-series-description"><span class="en-text">{item.description}</span><span class="zh-text">{item.descriptionZh}</span></p>
+          <a href={item.source} target="_blank" rel="noreferrer"><span class="en-text">View original post</span><span class="zh-text">查看原帖</span><span aria-hidden="true">↗</span></a>
+        </header>
+        <div class="photography-series-images">
+          {item.featured.map((photoNumber, imageIndex) => (
+            <figure class:list={["photography-shot", `photography-shot--${imageIndex + 1}`]}>
+              <img src={photoPath(item.slug, photoNumber)} alt={`${item.title} photograph ${photoNumber}`} loading={index === 0 ? "eager" : "lazy"} decoding="async" />
+            </figure>
+          ))}
+        </div>
+        <details class="photography-full-series">
+          <summary>
+            <span class="en-text">View complete series · {item.count} photographs</span>
+            <span class="zh-text">查看完整组图 · {item.count} 张</span>
+            <span aria-hidden="true" class="photography-summary-icon">+</span>
+          </summary>
+          <div class="photography-full-grid">
+            {Array.from({ length: item.count }, (_, photoIndex) => (
+              <figure><img src={photoPath(item.slug, photoIndex + 1)} alt={`${item.title} photograph ${photoIndex + 1}`} loading="lazy" decoding="async" /></figure>
+            ))}
+          </div>
+        </details>
+      </article>
+    ))}
+  </section>
+</PartDetailLayout>

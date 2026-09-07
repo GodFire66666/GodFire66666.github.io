@@ -19,7 +19,7 @@ const meta = [
 ---
 
 <PartDetailLayout
-  part="04"
+  part="05"
   title="Writing"
   titleZh="文章"
   pageTitle={title}
@@ -32,30 +32,52 @@ const meta = [
   descriptionZh="关于技术、工作方法，以及那些在书写中逐渐清晰的问题的长篇记录。每篇文章从一个具体问题出发，也为答案继续变化留下空间。"
   image="/projects/writing-cover.webp"
   imageAlt="Editorial cover for Yucong Luo's long-form writing"
+  imageAspect={4 / 3}
+  showOverview={false}
   showHeroTitle={false}
   background="#eee4e7"
   foreground="#49343b"
-  accent="#a04f6a"
+  accent="#91445e"
+  heroBackground="#91445e"
+  heroForeground="#ffffff"
+  heroAccent="#ffffff"
+  heroOutline="#ffffff"
   {meta}
   nextHref="/about/"
   nextTitle="Yucong Luo"
   nextTitleZh="罗彧淙"
   nextImage="/hero-portrait-centered.jpg"
+  nextImageAspect={1596 / 986}
   nextBackground="#3d4545"
-  nextAccent="#d8a48b"
+  nextAccent="#c7b8b1"
+  nextRail="#c7b8b1"
 >
   <section class="detail-article" data-detail-reveal>
     <header class="detail-article-header">
       <p><span class="en-text">The article</span><span class="zh-text">正文</span></p>
+      <p class="detail-article-date">
+        <time class="en-text" datetime={published.toISOString()}>{formatDate(published)}</time>
+        <time class="zh-text" datetime={published.toISOString()}>{formatDateZh(published)}</time>
+      </p>
       {updated && (
-        <p>
+        <p class="detail-article-date">
           <span class="en-text">Updated {formatDate(updated)}</span>
           <span class="zh-text">更新于 {formatDateZh(updated)}</span>
         </p>
       )}
     </header>
-    <div class="prose detail-article-prose">
-      <slot />
+    <div class="detail-article-body">
+      <h2 class="detail-article-title">
+        <span class="en-text">{title}</span>
+        <span class="zh-text">{translation.data.title}</span>
+      </h2>
+      <p class="detail-article-description">
+        <span class="en-text">{description}</span>
+        <span class="zh-text">{translation.data.description}</span>
+      </p>
+      <div class="prose detail-article-prose">
+        <slot />
+      </div>
     </div>
   </section>
 </PartDetailLayout>
